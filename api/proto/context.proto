@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package acb.v1;
+
+option go_package = "github.com/acb/api/proto/acbv1";
+
+import "api/proto/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// ContextService for context management
+service ContextService {
+  // Create a new context (small contexts <1MB only, use streaming for larger)
+  rpc CreateContext(CreateContextRequest) returns (CreateContextResponse);
+
+  // Get context by ID
+  rpc GetContext(GetContextRequest) returns (GetContextResponse);
+
+  // Update context
+  rpc UpdateContext(UpdateContextRequest) returns (UpdateContextResponse);
+
+  // Delete context
+  rpc DeleteContext(DeleteContextRequest) returns (DeleteContextResponse);
+
+  // List contexts with optional filters
+  rpc ListContexts(ListContextsRequest) returns (ListContextsResponse);
+
+  // Subscribe to context updates by topic (streaming)
+  rpc Subscribe(SubscribeRequest) returns (stream ContextEvent);
+}
+
+// CreateContextRequest creates a new context
+message CreateContextRequest {
+  string type = 1;                        // Context type (required, e.g., "user-profile", "model-weights")
+  bytes payload = 2;                      // Actual data (required, must be <1MB)
+  map<string, string> metadata = 3;      // Additional metadata (optional)
+  string version = 4;                     // Schema version (optional, default: "1.0")
+  AccessControl access_control = 5;       // Who can access (required)
+  int64 ttl_seconds = 6;                  // Time to live in seconds (optional, 0 = no expiration)
+}
+
+// CreateContextResponse returns the created context
+message CreateContextResponse {
+  Context context = 1;
+}
+
+// GetContextRequest gets context by ID
+message GetContextRequest {
+  string context_id = 1;                 // Context ID (required)
+}
+
+// GetContextResponse returns context details
+message GetContextResponse {
+  Context context = 1;
+}
+
+// UpdateContextRequest updates an existing context
+message UpdateContextRequest {
+  string context_id = 1;                 // Context ID (required)
+  bytes payload = 2;                      // Updated payload (optional)
+  map<string, string> metadata = 3;      // Updated metadata (optional)
+  string version = 4;                     // Updated version (optional)
+  AccessControl access_control = 5;       // Updated access control (optional)
+  int64 ttl_seconds = 6;                  // Updated TTL (optional)
+}
+
+// UpdateContextResponse returns the updated context
+message UpdateContextResponse {
+  Context context = 1;
+}
+
+// DeleteContextRequest deletes a context
+message DeleteContextRequest {
+  string context_id = 1;                 // Context ID (required)
+}
+
+// DeleteContextResponse confirms deletion
+message DeleteContextResponse {
+  bool success = 1;
+}
+
+// ListContextsRequest lists contexts with filters
+message ListContextsRequest {
+  string type = 1;                       // Filter by context type (optional)
+  string agent_id = 2;                   // Filter by creator agent ID (optional)
+  PaginationRequest pagination = 3;     // Pagination (optional)
+}
+
+// ListContextsResponse returns list of contexts
+message ListContextsResponse {
+  repeated Context contexts = 1;
+  PaginationResponse pagination = 2;
+}
+
+// SubscribeRequest subscribes to context updates
+message SubscribeRequest {
+  string topic = 1;                      // Topic to subscribe to (required)
+  map<string, string> filters = 2;       // Metadata filters (optional, e.g., {"priority": "high"})
+}
+
+// ContextEvent represents a context update event
+message ContextEvent {
+  string event_type = 1;                 // Event type: "created", "updated", "deleted"
+  Context context = 2;                   // Context data (for created/updated events)
+  string context_id = 3;                 // Context ID (for deleted events)
+  google.protobuf.Timestamp timestamp = 4;
+}
+

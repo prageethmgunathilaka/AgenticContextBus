@@ -1,0 +1,1122 @@
+openapi: 3.0.3
+info:
+  title: Agentic Context Bus (ACB) API
+  version: 1.0.0
+  description: |
+    REST API for Agentic Context Bus - Enterprise-grade communication framework
+    for distributed AI agents to share context across remote locations.
+  contact:
+    name: ACB Support
+    email: support@acb.example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.acb.example.com/v1
+    description: Production server
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Agents
+    description: Agent registration and discovery
+  - name: Contexts
+    description: Context management
+  - name: Messages
+    description: Message routing
+  - name: Streaming
+    description: Large context streaming
+  - name: Health
+    description: Health and monitoring
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login and receive JWT token
+      description: Authenticate with credentials and receive access token and refresh token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Use refresh token to obtain new access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout and invalidate token
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /agents:
+    get:
+      tags:
+        - Agents
+      summary: Discover agents
+      description: List and discover agents with optional filters
+      operationId: listAgents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by agent type
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filter by location
+          schema:
+            type: string
+        - name: capability
+          in: query
+          description: Filter by capability
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            $ref: '#/components/schemas/AgentStatus'
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Agents
+      summary: Register agent
+      description: Register a new agent with ACB hub
+      operationId: registerAgent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAgentRequest'
+      responses:
+        '201':
+          description: Agent registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Agent ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agents/{agent_id}:
+    get:
+      tags:
+        - Agents
+      summary: Get agent details
+      operationId: getAgent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Agents
+      summary: Unregister agent
+      operationId: unregisterAgent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Agent unregistered successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/heartbeat:
+    post:
+      tags:
+        - Agents
+      summary: Send heartbeat
+      description: Update agent's last seen timestamp
+      operationId: sendHeartbeat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Heartbeat acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /contexts:
+    get:
+      tags:
+        - Contexts
+      summary: List contexts
+      description: List contexts with optional filters
+      operationId: listContexts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by context type
+          schema:
+            type: string
+        - name: agent_id
+          in: query
+          description: Filter by creator agent ID
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of contexts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Contexts
+      summary: Create context
+      description: Create a new context (small contexts <1MB only, use streaming for larger)
+      operationId: createContext
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContextRequest'
+      responses:
+        '201':
+          description: Context created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /contexts/{context_id}:
+    get:
+      tags:
+        - Contexts
+      summary: Get context
+      operationId: getContext
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Context details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Contexts
+      summary: Update context
+      operationId: updateContext
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContextRequest'
+      responses:
+        '200':
+          description: Context updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Contexts
+      summary: Delete context
+      operationId: deleteContext
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: context_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Context deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /messages:
+    post:
+      tags:
+        - Messages
+      summary: Send message
+      description: Send a message to another agent or broadcast to all
+      operationId: sendMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /messages/{message_id}:
+    get:
+      tags:
+        - Messages
+      summary: Get message status
+      operationId: getMessageStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /streams/init:
+    post:
+      tags:
+        - Streaming
+      summary: Initialize stream
+      description: Initialize a new stream for large context transfer
+      operationId: initStream
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitStreamRequest'
+      responses:
+        '201':
+          description: Stream initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /streams/{stream_id}/chunks:
+    post:
+      tags:
+        - Streaming
+      summary: Upload chunk
+      description: Upload a chunk of data for streaming context
+      operationId: uploadChunk
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: stream_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Chunk uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChunkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /streams/{stream_id}/progress:
+    get:
+      tags:
+        - Streaming
+      summary: Get stream progress
+      operationId: getStreamProgress
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: stream_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /streams/{stream_id}:
+    get:
+      tags:
+        - Streaming
+      summary: Download stream
+      description: Download a completed stream
+      operationId: downloadStream
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: stream_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream data
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Stream not completed yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: agent-123
+        password:
+          type: string
+          format: password
+          example: secret123
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        expires_in:
+          type: integer
+          description: Token expiration in seconds
+          example: 3600
+        token_type:
+          type: string
+          example: Bearer
+
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+
+    RefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+          example: 3600
+
+    AgentStatus:
+      type: string
+      enum:
+        - online
+        - offline
+        - unknown
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: agent-123
+        type:
+          type: string
+          example: ml
+        location:
+          type: string
+          example: us-east-1
+        capabilities:
+          type: array
+          items:
+            type: string
+          example:
+            - image-recognition
+            - nlp
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        status:
+          $ref: '#/components/schemas/AgentStatus'
+        tenant_id:
+          type: string
+          example: tenant-abc
+        created_at:
+          type: string
+          format: date-time
+        last_seen:
+          type: string
+          format: date-time
+
+    RegisterAgentRequest:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          example: agent-123
+        type:
+          type: string
+          example: ml
+        location:
+          type: string
+          example: us-east-1
+        capabilities:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    AgentResponse:
+      type: object
+      properties:
+        agent:
+          $ref: '#/components/schemas/Agent'
+
+    AgentListResponse:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    HeartbeatResponse:
+      type: object
+      properties:
+        acknowledged:
+          type: boolean
+        last_seen:
+          type: string
+          format: date-time
+
+    ContextScope:
+      type: string
+      enum:
+        - public
+        - private
+        - group
+        - shared
+
+    AccessControl:
+      type: object
+      properties:
+        scope:
+          $ref: '#/components/schemas/ContextScope'
+        allowed_ids:
+          type: array
+          items:
+            type: string
+          description: Agent IDs allowed to access (for group/shared scopes)
+
+    Context:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ctx-123
+        type:
+          type: string
+          example: user-profile
+        agent_id:
+          type: string
+          example: agent-123
+        tenant_id:
+          type: string
+        payload:
+          type: string
+          format: byte
+          description: Base64-encoded payload (for small contexts <1MB)
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        version:
+          type: string
+          example: 1.0
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        checksum:
+          type: string
+          description: SHA-256 checksum
+
+    CreateContextRequest:
+      type: object
+      required:
+        - type
+        - payload
+      properties:
+        type:
+          type: string
+          example: user-profile
+        payload:
+          type: string
+          format: byte
+          description: Base64-encoded payload (must be <1MB)
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        version:
+          type: string
+          example: 1.0
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+        ttl:
+          type: integer
+          description: Time to live in seconds
+          example: 86400
+
+    UpdateContextRequest:
+      type: object
+      properties:
+        payload:
+          type: string
+          format: byte
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        version:
+          type: string
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+        ttl:
+          type: integer
+
+    ContextResponse:
+      type: object
+      properties:
+        context:
+          $ref: '#/components/schemas/Context'
+
+    ContextListResponse:
+      type: object
+      properties:
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Context'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    MessageType:
+      type: string
+      enum:
+        - event
+        - command
+        - query
+        - response
+
+    SendMessageRequest:
+      type: object
+      required:
+        - to
+        - topic
+        - type
+      properties:
+        to:
+          type: string
+          description: Recipient agent ID (empty for broadcast)
+          example: agent-456
+        topic:
+          type: string
+          example: agent-events
+        type:
+          $ref: '#/components/schemas/MessageType'
+        context_id:
+          type: string
+          description: Reference to existing context
+        payload:
+          type: object
+          description: Message payload (JSON object)
+        idempotency_key:
+          type: string
+          description: Idempotency key for deduplication
+        correlation_id:
+          type: string
+          description: Correlation ID for request-reply
+        reply_to:
+          type: string
+          description: Reply address for request-reply
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          example: msg-123
+        status:
+          type: string
+          example: queued
+        timestamp:
+          type: string
+          format: date-time
+
+    MessageStatusResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - delivered
+            - failed
+        delivered_at:
+          type: string
+          format: date-time
+        error:
+          type: string
+
+    InitStreamRequest:
+      type: object
+      required:
+        - type
+        - size
+      properties:
+        type:
+          type: string
+          example: model-weights
+        size:
+          type: integer
+          description: Total size in bytes
+          example: 10485760
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+
+    StreamResponse:
+      type: object
+      properties:
+        stream_id:
+          type: string
+          example: stream-123
+        chunk_size:
+          type: integer
+          description: Recommended chunk size in bytes
+          example: 1048576
+
+    ChunkResponse:
+      type: object
+      properties:
+        chunk_index:
+          type: integer
+        bytes_received:
+          type: integer
+        total_bytes:
+          type: integer
+        progress:
+          type: number
+          format: float
+          description: Progress percentage (0.0 to 1.0)
+
+    StreamProgressResponse:
+      type: object
+      properties:
+        stream_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - failed
+        bytes_received:
+          type: integer
+        total_bytes:
+          type: integer
+        progress:
+          type: number
+          format: float
+        checksum:
+          type: string
+          description: Final SHA-256 checksum when completed
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+          example: 1.0.0
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            database: healthy
+            kafka: healthy
+            redis: healthy
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid request parameters
+            details:
+              type: object
+              additionalProperties:
+                type: string
+            request_id:
+              type: string
+              example: req-123
+            timestamp:
+              type: string
+              format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+

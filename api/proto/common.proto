@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package acb.v1;
+
+option go_package = "github.com/acb/api/proto/acbv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Common types and enums used across all services
+
+// AgentStatus represents the current status of an agent
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ONLINE = 1;
+  AGENT_STATUS_OFFLINE = 2;
+  AGENT_STATUS_UNKNOWN = 3;
+}
+
+// MessageType represents the type of message
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_EVENT = 1;      // Fire-and-forget event
+  MESSAGE_TYPE_COMMAND = 2;    // Request for action
+  MESSAGE_TYPE_QUERY = 3;      // Request for data
+  MESSAGE_TYPE_RESPONSE = 4;   // Reply to query/command
+}
+
+// ContextScope defines who can access a context
+enum ContextScope {
+  CONTEXT_SCOPE_UNSPECIFIED = 0;
+  CONTEXT_SCOPE_PUBLIC = 1;    // All agents in tenant can access
+  CONTEXT_SCOPE_PRIVATE = 2;   // Only creating agent can access
+  CONTEXT_SCOPE_GROUP = 3;     // Specific group of agents
+  CONTEXT_SCOPE_SHARED = 4;    // Explicitly shared with specific agents
+}
+
+// ErrorCode represents API error codes
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  ERROR_CODE_UNAUTHORIZED = 1;
+  ERROR_CODE_FORBIDDEN = 2;
+  ERROR_CODE_NOT_FOUND = 3;
+  ERROR_CODE_VALIDATION_ERROR = 4;
+  ERROR_CODE_RATE_LIMIT_EXCEEDED = 5;
+  ERROR_CODE_INTERNAL_ERROR = 6;
+  ERROR_CODE_SERVICE_UNAVAILABLE = 7;
+}
+
+// Agent represents an autonomous agent in the system
+message Agent {
+  string id = 1;                           // Unique agent identifier
+  string type = 2;                         // Agent type (e.g., "ml", "rpa", "chatbot")
+  string location = 3;                     // Physical/logical location
+  repeated string capabilities = 4;         // What this agent can do
+  map<string, string> metadata = 5;        // Custom metadata
+  AgentStatus status = 6;                  // Current status
+  string tenant_id = 7;                    // Tenant ownership
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp last_seen = 9; // Last heartbeat
+}
+
+// AccessControl defines who can access a context
+message AccessControl {
+  ContextScope scope = 1;                  // Access scope
+  repeated string allowed_ids = 2;          // Specific agent IDs (for group/shared scopes)
+}
+
+// StorageRef points to large payloads in object storage (Phase 2+)
+message StorageRef {
+  string backend = 1;  // "s3", "minio", "azure", etc.
+  string bucket = 2;   // Bucket/container name
+  string key = 3;      // Object key/path
+  int64 size = 4;      // Size in bytes
+}
+
+// Context represents shared state/knowledge between agents
+message Context {
+  string id = 1;                           // Unique context identifier
+  string type = 2;                         // Context type (e.g., "user-profile", "model-weights")
+  string agent_id = 3;                     // Agent that created this context
+  string tenant_id = 4;                    // Tenant ownership
+  bytes payload = 5;                       // Actual data (for small contexts <1MB)
+  StorageRef payload_ref = 6;              // Reference to large payload in object storage
+  map<string, string> metadata = 7;        // Additional metadata
+  string version = 8;                      // Schema version
+  string schema_id = 9;                    // Schema registry ID (optional)
+  int64 ttl_seconds = 10;                  // Time to live in seconds
+  AccessControl access_control = 11;        // Who can access
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp expires_at = 13; // Auto-delete after this
+  string checksum = 14;                    // SHA-256 for integrity
+}
+
+// Message represents communication between agents
+message Message {
+  string id = 1;                           // Unique message ID
+  string from = 2;                         // Sender agent ID
+  string to = 3;                          // Recipient agent ID (empty for broadcast)
+  string topic = 4;                       // Kafka topic / routing key
+  string context_id = 5;                  // Referenced context
+  Context context = 6;                    // Embedded context (for small data)
+  MessageType type = 7;                   // Message type
+  string idempotency_key = 8;             // For deduplication
+  string correlation_id = 9;              // For request-reply
+  string reply_to = 10;                   // Reply address
+  map<string, string> metadata = 11;      // Custom metadata
+  google.protobuf.Timestamp timestamp = 12; // When sent
+  google.protobuf.Timestamp expires_at = 13; // Optional expiration
+}
+
+// ErrorDetails provides detailed error information
+message ErrorDetails {
+  ErrorCode code = 1;
+  string message = 2;
+  map<string, string> details = 3;        // Additional context
+  string request_id = 4;                  // Correlation ID
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+// PaginationRequest for list operations
+message PaginationRequest {
+  int32 limit = 1;                        // Maximum number of results (default: 100, max: 1000)
+  int32 offset = 2;                       // Pagination offset (default: 0)
+}
+
+// PaginationResponse for list operations
+message PaginationResponse {
+  int32 total = 1;                        // Total number of results
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+// Metadata for custom key-value pairs
+message Metadata {
+  map<string, string> values = 1;
+}
+

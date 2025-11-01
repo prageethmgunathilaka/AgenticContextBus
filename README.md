@@ -23,8 +23,8 @@ ACB enables autonomous agents (AI, RPA, automation, microservices) running in di
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/prageethmgunathilaka/AgenticContextBus.git
-   cd AgenticContextBus
+   git clone https://github.com/acb/acb.git
+   cd acb
    ```
 
 2. **Start development environment**
@@ -140,6 +140,7 @@ Apache 2.0 or Business Source License
 
 ## Status
 
-✅ **Phase 1 (MVP) - Complete**
+🚧 **Phase 1 (MVP) - In Progress**
 
 See [TASKS.md](./TASKS.md) for implementation progress.
+
