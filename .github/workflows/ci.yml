@@ -1,0 +1,325 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+      - master
+
+env:
+  GO_VERSION: '1.21'
+  MIN_COVERAGE: 90
+
+jobs:
+  test:
+    name: Run Tests & Coverage Check
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: acb
+          POSTGRES_USER: acb
+          POSTGRES_PASSWORD: acb_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.5.0
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+        ports:
+          - 2181:2181
+      
+      kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        depends-on:
+          - zookeeper
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+          KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+        ports:
+          - 9092:9092
+          - 9093:9093
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: |
+          go mod download
+          go mod tidy
+
+      - name: Verify dependencies
+        run: |
+          go mod verify
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 15
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -coverprofile=coverage.out ./...
+          echo "Coverage report generated"
+
+      - name: Display coverage summary
+        run: |
+          echo "=== Coverage Summary ==="
+          go tool cover -func=coverage.out | grep total
+          echo "========================"
+
+      - name: Verify code coverage >90%
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Current coverage: ${COVERAGE}%"
+          echo "Minimum required: ${MIN_COVERAGE}%"
+          
+          # Use awk for floating point comparison since bash doesn't handle decimals well
+          if awk "BEGIN {exit !($COVERAGE >= $MIN_COVERAGE)}"; then
+            echo "✅ Coverage ${COVERAGE}% meets minimum requirement of ${MIN_COVERAGE}%"
+          else
+            echo "❌ Coverage ${COVERAGE}% is below minimum ${MIN_COVERAGE}%"
+            echo "Please add more tests to increase coverage"
+            exit 1
+          fi
+
+      - name: Generate coverage HTML report
+        run: |
+          go tool cover -html=coverage.out -o coverage.html
+          echo "Coverage HTML report generated: coverage.html"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage.html
+          retention-days: 30
+
+      - name: Upload coverage to Codecov (optional)
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: --timeout=5m
+
+  format-check:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check formatting
+        run: |
+          UNFORMATTED=$(gofmt -s -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "❌ Code is not formatted. Please run 'go fmt ./...'"
+            echo "$UNFORMATTED"
+            exit 1
+          else
+            echo "✅ Code is properly formatted"
+          fi
+
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    needs: [test, lint, format-check]
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          go mod download
+
+      - name: Build binaries
+        run: |
+          echo "Building ACB server..."
+          go build -o bin/acb-server ./cmd/acb-server
+          echo "Building ACB CLI..."
+          go build -o bin/acb-cli ./cmd/acb-cli
+          echo "Building demo agents..."
+          go build -o bin/agent-a ./cmd/acb-agent-demo/hello-world/agent-a
+          go build -o bin/agent-b ./cmd/acb-agent-demo/hello-world/agent-b
+          echo "✅ All binaries built successfully"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.os }}
+          path: bin/
+          retention-days: 7
+
+  pr-status:
+    name: PR Status Comment
+    runs-on: ubuntu-latest
+    needs: [test, lint, format-check, build]
+    if: github.event_name == 'pull_request' && always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./
+
+      - name: Get test coverage
+        id: coverage
+        run: |
+          if [ -f coverage.out ]; then
+            COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "coverage=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get job statuses
+        id: status
+        run: |
+          TEST_STATUS=${{ needs.test.result }}
+          LINT_STATUS=${{ needs.lint.result }}
+          FORMAT_STATUS=${{ needs.format-check.result }}
+          BUILD_STATUS=${{ needs.build.result }}
+          
+          echo "test_status=$TEST_STATUS" >> $GITHUB_OUTPUT
+          echo "lint_status=$LINT_STATUS" >> $GITHUB_OUTPUT
+          echo "format_status=$FORMAT_STATUS" >> $GITHUB_OUTPUT
+          echo "build_status=$BUILD_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const coverage = '${{ steps.coverage.outputs.coverage }}';
+            const testStatus = '${{ steps.status.outputs.test_status }}';
+            const lintStatus = '${{ steps.status.outputs.lint_status }}';
+            const formatStatus = '${{ steps.status.outputs.format_status }}';
+            const buildStatus = '${{ steps.status.outputs.build_status }}';
+            
+            const testIcon = testStatus === 'success' ? '✅' : '❌';
+            const lintIcon = lintStatus === 'success' ? '✅' : '❌';
+            const formatIcon = formatStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            
+            const allPassed = testStatus === 'success' && lintStatus === 'success' && 
+                              formatStatus === 'success' && buildStatus === 'success';
+            
+            const body = `## ${allPassed ? '✅' : '❌'} CI/CD Pipeline Results
+            
+            ### Test Results
+            ${testIcon} **Tests**: ${testStatus === 'success' ? 'Passed' : 'Failed'}
+            📊 **Test Coverage**: **${coverage}** (Minimum: 90%)
+            ${lintIcon} **Linting**: ${lintStatus === 'success' ? 'Passed' : 'Failed'}
+            ${formatIcon} **Formatting**: ${formatStatus === 'success' ? 'Passed' : 'Failed'}
+            ${buildIcon} **Build**: ${buildStatus === 'success' ? 'Succeeded' : 'Failed'}
+            
+            ### Summary
+            ${allPassed ? '✅ All checks passed successfully! Ready for review. 🚀' : '❌ Some checks failed. Please review and fix the issues.'}
+            
+            ---
+            *Coverage report and build artifacts are available in the workflow artifacts.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
