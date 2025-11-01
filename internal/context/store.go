@@ -115,10 +115,10 @@ func (s *PostgresContextStore) Get(ctx context.Context, contextID string) (*mode
 		c.ExpiresAt = expiresAt.Time
 	}
 
-	json.Unmarshal(metadataJSON, &c.Metadata)
-	json.Unmarshal(accessControlJSON, &c.AccessControl)
+	_ = json.Unmarshal(metadataJSON, &c.Metadata)
+	_ = json.Unmarshal(accessControlJSON, &c.AccessControl)
 	if len(payloadRefJSON) > 0 {
-		json.Unmarshal(payloadRefJSON, &c.PayloadRef)
+		_ = json.Unmarshal(payloadRefJSON, &c.PayloadRef)
 	}
 
 	return &c, nil
@@ -220,7 +220,6 @@ func (s *PostgresContextStore) List(ctx context.Context, filters *storage.Contex
 	if filters.Offset > 0 {
 		query += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, filters.Offset)
-		argIndex++
 	}
 
 	rows, err := s.pool.Query(ctx, query, args...)

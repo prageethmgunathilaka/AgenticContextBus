@@ -12,7 +12,7 @@ import (
 // Service provides agent registry operations
 type Service struct {
 	store storage.AgentStore
-	cache storage.AgentCache // Will be implemented
+	// cache storage.AgentCache // Will be implemented later
 }
 
 // NewService creates a new registry service

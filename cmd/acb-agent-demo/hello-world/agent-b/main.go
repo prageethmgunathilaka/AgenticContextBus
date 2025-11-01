@@ -43,7 +43,9 @@ func main() {
 		log.Printf("Agent B: Message: %s", string(c.Payload))
 		return nil
 	})
-	defer subscription.Unsubscribe()
+	defer func() {
+		_ = subscription.Unsubscribe()
+	}()
 
 	log.Println("Agent B: Subscribed to greetings")
 

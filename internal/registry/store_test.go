@@ -68,7 +68,7 @@ func TestPostgresAgentStore_Create(t *testing.T) {
 	}
 
 	// Cleanup
-	agentStore.Delete(ctx, "test-agent-1")
+	_ = agentStore.Delete(ctx, "test-agent-1")
 }
 
 func TestPostgresAgentStore_Get(t *testing.T) {
@@ -94,7 +94,9 @@ func TestPostgresAgentStore_Get(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-get")
+	defer func() {
+		_ = agentStore.Delete(ctx, "test-agent-get")
+	}()
 
 	// Test Get
 	got, err := agentStore.Get(ctx, "test-agent-get")
@@ -130,7 +132,9 @@ func TestPostgresAgentStore_Update(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-update")
+	defer func() {
+		_ = agentStore.Delete(ctx, "test-agent-update")
+	}()
 
 	// Update agent
 	agent.Type = "rpa"
@@ -165,8 +169,10 @@ func TestPostgresAgentStore_List(t *testing.T) {
 			CreatedAt: time.Now(),
 			LastSeen:  time.Now(),
 		}
-		agentStore.Create(ctx, agent)
-		defer agentStore.Delete(ctx, agent.ID)
+		_ = agentStore.Create(ctx, agent)
+		defer func(id string) {
+			_ = agentStore.Delete(ctx, id)
+		}(agent.ID)
 	}
 
 	// Test List

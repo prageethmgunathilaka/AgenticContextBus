@@ -182,7 +182,6 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 	if filters.Offset > 0 {
 		query += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, filters.Offset)
-		argIndex++
 	}
 
 	rows, err := s.pool.Query(ctx, query, args...)

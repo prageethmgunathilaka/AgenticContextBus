@@ -102,7 +102,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		srv.Shutdown(shutdownCtx)
+		_ = srv.Shutdown(shutdownCtx)
 	}()
 
 	fmt.Printf("HTTP server starting on port %s\n", s.port)
