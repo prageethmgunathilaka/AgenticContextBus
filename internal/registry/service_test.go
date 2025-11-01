@@ -78,7 +78,7 @@ func (m *MockAgentStore) List(ctx context.Context, filters *storage.AgentFilters
 func (m *MockAgentStore) UpdateLastSeen(ctx context.Context, agentID string) error {
 	agent, exists := m.agents[agentID]
 	if !exists {
-		return &storage.ErrNotFound{}
+		return fmt.Errorf("agent not found: %w", ErrNotFound)
 	}
 	agent.LastSeen = time.Now()
 	agent.Status = models.AgentStatusOnline

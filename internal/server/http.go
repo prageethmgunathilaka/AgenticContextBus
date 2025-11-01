@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/acb/internal/auth"
-	"github.com/acb/internal/context"
+	contextmgr "github.com/acb/internal/context"
 	"github.com/acb/internal/registry"
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ import (
 type HTTPServer struct {
 	router         *gin.Engine
 	registrySvc    *registry.Service
-	contextMgr     *context.Manager
+	contextMgr     *contextmgr.Manager
 	jwtManager     *auth.JWTManager
 	rbac           *auth.RBAC
 	port           string
@@ -26,7 +26,7 @@ type HTTPServer struct {
 func NewHTTPServer(
 	port string,
 	registrySvc *registry.Service,
-	contextMgr *context.Manager,
+	contextMgr *contextmgr.Manager,
 	jwtManager *auth.JWTManager,
 	rbac *auth.RBAC,
 ) *HTTPServer {
