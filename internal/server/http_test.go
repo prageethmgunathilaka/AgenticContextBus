@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/acb/internal/auth"
-	"github.com/acb/internal/context"
-	"github.com/acb/internal/registry"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

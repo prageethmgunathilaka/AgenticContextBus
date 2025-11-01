@@ -102,6 +102,30 @@ jobs:
           echo "Waiting for services to be ready..."
           sleep 15
 
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verify PostgreSQL is ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U acb; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready"
+
+      - name: Run database migrations
+        run: |
+          echo "Running database migrations..."
+          export PGPASSWORD=acb_password
+          psql -h localhost -U acb -d acb -f migrations/001_create_agents_table.sql
+          psql -h localhost -U acb -d acb -f migrations/002_create_contexts_table.sql
+          psql -h localhost -U acb -d acb -f migrations/003_create_messages_table.sql
+          psql -h localhost -U acb -d acb -f migrations/004_create_audit_log_table.sql
+          psql -h localhost -U acb -d acb -f migrations/005_create_indexes.sql
+          echo "Migrations completed"
+
       - name: Run tests with coverage
         run: |
           go test -v -coverprofile=coverage.out ./...
