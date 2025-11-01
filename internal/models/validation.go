@@ -102,4 +102,3 @@ func (c *Context) CalculateExpiration() time.Time {
 	}
 	return time.Now().Add(c.TTL)
 }
-

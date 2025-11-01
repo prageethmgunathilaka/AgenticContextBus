@@ -158,12 +158,12 @@ func TestPostgresAgentStore_List(t *testing.T) {
 	// Create test agents
 	for i := 0; i < 3; i++ {
 		agent := &models.Agent{
-			ID:       "test-agent-list-" + string(rune(i)),
-			Type:     "ml",
-			Status:   models.AgentStatusOnline,
-			TenantID: "default",
+			ID:        "test-agent-list-" + string(rune(i)),
+			Type:      "ml",
+			Status:    models.AgentStatusOnline,
+			TenantID:  "default",
 			CreatedAt: time.Now(),
-			LastSeen: time.Now(),
+			LastSeen:  time.Now(),
 		}
 		agentStore.Create(ctx, agent)
 		defer agentStore.Delete(ctx, agent.ID)
@@ -219,4 +219,3 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, got.LastSeen.After(agent.LastSeen))
 }
-

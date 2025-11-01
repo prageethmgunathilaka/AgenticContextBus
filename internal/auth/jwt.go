@@ -112,4 +112,3 @@ func GenerateSecretKey() (string, error) {
 	}
 	return fmt.Sprintf("%x", key), nil
 }
-

@@ -68,4 +68,3 @@ func (r *RedisProgressStore) Delete(ctx context.Context, streamID string) error 
 	key := fmt.Sprintf("stream:%s", streamID)
 	return r.redis.Delete(ctx, key)
 }
-

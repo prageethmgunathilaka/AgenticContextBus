@@ -126,4 +126,3 @@ func TestRequestIDMiddleware(t *testing.T) {
 
 	assert.NotEmpty(t, w.Header().Get("X-Request-ID"))
 }
-

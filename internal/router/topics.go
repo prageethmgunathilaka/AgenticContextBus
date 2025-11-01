@@ -32,4 +32,3 @@ func (tm *TopicManager) EnsureTopic(ctx context.Context, topic string) error {
 func GetTopicName(tenantID, topic string) string {
 	return fmt.Sprintf("acb.%s.%s", tenantID, topic)
 }
-

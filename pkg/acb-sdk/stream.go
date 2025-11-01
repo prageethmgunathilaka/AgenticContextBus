@@ -106,4 +106,3 @@ func (s *Subscribe) WithFilter(key, value string) *Subscribe {
 	// TODO: Implement filter
 	return s
 }
-

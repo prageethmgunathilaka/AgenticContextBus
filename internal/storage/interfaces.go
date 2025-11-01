@@ -60,4 +60,3 @@ type ContextCache interface {
 	Set(ctx context.Context, c *models.Context, ttl time.Duration) error
 	Delete(ctx context.Context, contextID string) error
 }
-

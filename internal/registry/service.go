@@ -77,4 +77,3 @@ type RegisterRequest struct {
 	Metadata     map[string]string
 	TenantID     string
 }
-

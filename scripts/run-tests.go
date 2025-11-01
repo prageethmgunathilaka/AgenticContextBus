@@ -22,11 +22,11 @@ func main() {
 
 	for _, pkg := range packages {
 		fmt.Printf("\n=== Testing %s ===\n", pkg)
-		
+
 		cmd := exec.Command("go", "test", "-v", "-short", "-coverprofile=coverage.out", pkg)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		
+
 		if err := cmd.Run(); err != nil {
 			fmt.Printf("Tests failed for %s: %v\n", pkg, err)
 			continue
@@ -45,4 +45,3 @@ func main() {
 	fmt.Printf("\n=== Summary ===\n")
 	fmt.Printf("Tested %d packages\n", packageCount)
 }
-

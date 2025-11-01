@@ -196,4 +196,3 @@ func TestService_Discover(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(agents), 3)
 }
-

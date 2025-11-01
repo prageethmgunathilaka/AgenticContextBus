@@ -188,6 +188,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Install dependencies
+        run: |
+          go mod download
+          go mod tidy
+
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -248,8 +253,6 @@ jobs:
         run: |
           echo "Building ACB server..."
           go build -o bin/acb-server ./cmd/acb-server
-          echo "Building ACB CLI..."
-          go build -o bin/acb-cli ./cmd/acb-cli
           echo "Building demo agents..."
           go build -o bin/agent-a ./cmd/acb-agent-demo/hello-world/agent-a
           go build -o bin/agent-b ./cmd/acb-agent-demo/hello-world/agent-b

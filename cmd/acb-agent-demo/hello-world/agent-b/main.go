@@ -21,9 +21,9 @@ func main() {
 
 	// Register agent
 	req := &acb.RegisterAgentRequest{
-		ID:       "agent-b",
-		Type:     "hello-world",
-		Location: "local",
+		ID:           "agent-b",
+		Type:         "hello-world",
+		Location:     "local",
 		Capabilities: []string{"greeting"},
 		Metadata: map[string]string{
 			"version": "1.0",
@@ -62,4 +62,3 @@ func main() {
 	fmt.Println("Agent B running... Press Ctrl+C to stop")
 	select {}
 }
-

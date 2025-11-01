@@ -206,4 +206,3 @@ func (r *Router) Request(ctx context.Context, toAgentID string, topic string, me
 	// For MVP, return immediately
 	return nil, fmt.Errorf("request-reply not fully implemented in MVP")
 }
-

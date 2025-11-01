@@ -13,7 +13,7 @@ var (
 type ErrorCode string
 
 const (
-	ErrorCodeUnauthorized      ErrorCode = "UNAUTHORIZED"
+	ErrorCodeUnauthorized       ErrorCode = "UNAUTHORIZED"
 	ErrorCodeForbidden          ErrorCode = "FORBIDDEN"
 	ErrorCodeNotFound           ErrorCode = "NOT_FOUND"
 	ErrorCodeValidationError    ErrorCode = "VALIDATION_ERROR"
@@ -99,4 +99,3 @@ func InternalError(message string) *ACBError {
 func ServiceUnavailable(message string) *ACBError {
 	return NewACBError(ErrorCodeServiceUnavailable, message)
 }
-

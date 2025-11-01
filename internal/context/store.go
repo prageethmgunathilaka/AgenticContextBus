@@ -284,4 +284,3 @@ func (s *PostgresContextStore) DeleteExpired(ctx context.Context) (int, error) {
 	}
 	return int(result.RowsAffected()), nil
 }
-

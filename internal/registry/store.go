@@ -238,4 +238,3 @@ func (s *PostgresAgentStore) UpdateLastSeen(ctx context.Context, agentID string)
 	}
 	return nil
 }
-

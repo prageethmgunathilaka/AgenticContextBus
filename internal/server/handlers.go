@@ -98,12 +98,12 @@ func (s *HTTPServer) sendHeartbeat(c *gin.Context) {
 
 func (s *HTTPServer) createContext(c *gin.Context) {
 	var req struct {
-		Type          string                 `json:"type" binding:"required"`
-		Payload       []byte                 `json:"payload" binding:"required"`
-		Metadata      map[string]string      `json:"metadata"`
-		Version       string                 `json:"version"`
-		AccessControl models.AccessControl   `json:"access_control" binding:"required"`
-		TTL           int                    `json:"ttl"`
+		Type          string               `json:"type" binding:"required"`
+		Payload       []byte               `json:"payload" binding:"required"`
+		Metadata      map[string]string    `json:"metadata"`
+		Version       string               `json:"version"`
+		AccessControl models.AccessControl `json:"access_control" binding:"required"`
+		TTL           int                  `json:"ttl"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -219,4 +219,3 @@ func (s *HTTPServer) deleteContext(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
-

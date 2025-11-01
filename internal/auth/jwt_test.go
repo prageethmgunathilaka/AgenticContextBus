@@ -178,4 +178,3 @@ func TestParseRoles(t *testing.T) {
 		})
 	}
 }
-

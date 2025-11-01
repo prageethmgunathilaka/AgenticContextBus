@@ -76,4 +76,3 @@ func (s *RedisStore) Increment(ctx context.Context, key string) (int64, error) {
 func (s *RedisStore) GetClient() *redis.Client {
 	return s.client
 }
-

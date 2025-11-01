@@ -14,12 +14,12 @@ import (
 
 // HTTPServer wraps HTTP server
 type HTTPServer struct {
-	router         *gin.Engine
-	registrySvc    *registry.Service
-	contextMgr     *contextmgr.Manager
-	jwtManager     *auth.JWTManager
-	rbac           *auth.RBAC
-	port           string
+	router      *gin.Engine
+	registrySvc *registry.Service
+	contextMgr  *contextmgr.Manager
+	jwtManager  *auth.JWTManager
+	rbac        *auth.RBAC
+	port        string
 }
 
 // NewHTTPServer creates a new HTTP server
@@ -40,11 +40,11 @@ func NewHTTPServer(
 
 	srv := &HTTPServer{
 		router:      router,
-		registrySvc:  registrySvc,
-		contextMgr:   contextMgr,
-		jwtManager:   jwtManager,
-		rbac:         rbac,
-		port:         port,
+		registrySvc: registrySvc,
+		contextMgr:  contextMgr,
+		jwtManager:  jwtManager,
+		rbac:        rbac,
+		port:        port,
 	}
 
 	srv.setupRoutes()
@@ -210,4 +210,3 @@ func (s *HTTPServer) refreshToken(c *gin.Context) {
 		"expires_in":   3600,
 	})
 }
-

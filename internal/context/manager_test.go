@@ -88,10 +88,10 @@ func TestManager_Create(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -110,10 +110,10 @@ func TestManager_Get(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -132,10 +132,10 @@ func TestManager_Update(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -160,10 +160,10 @@ func TestManager_Delete(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -186,10 +186,10 @@ func TestManager_List(t *testing.T) {
 	// Create multiple contexts
 	for i := 0; i < 3; i++ {
 		req := &CreateRequest{
-			Type:    "user-profile",
-			AgentID: "agent-1",
+			Type:     "user-profile",
+			AgentID:  "agent-1",
 			TenantID: "default",
-			Payload: []byte("test data"),
+			Payload:  []byte("test data"),
 			AccessControl: models.AccessControl{
 				Scope: models.ScopePublic,
 			},
@@ -212,10 +212,10 @@ func TestManager_DeleteExpired(t *testing.T) {
 
 	// Create expired context
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -248,4 +248,3 @@ func TestCalculateChecksum(t *testing.T) {
 	checksum3 := calculateChecksum([]byte("different data"))
 	assert.NotEqual(t, checksum, checksum3)
 }
-

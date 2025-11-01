@@ -87,4 +87,3 @@ func TestRedisStore_Increment(t *testing.T) {
 	// Cleanup
 	store.Delete(ctx, "test-counter")
 }
-

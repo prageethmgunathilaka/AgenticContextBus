@@ -131,4 +131,3 @@ type InitStreamRequest struct {
 	AccessControl models.AccessControl
 	TTL           time.Duration
 }
-
