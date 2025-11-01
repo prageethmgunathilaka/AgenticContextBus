@@ -2,66 +2,240 @@ package storage
 
 import (
 	"context"
-	"errors"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/acb/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// PostgresStore wraps PostgreSQL connection pool
-type PostgresStore struct {
+// PostgresAgentStore implements AgentStore using PostgreSQL
+type PostgresAgentStore struct {
 	pool *pgxpool.Pool
 }
 
-// Pool returns the underlying connection pool
-func (s *PostgresStore) Pool() *pgxpool.Pool {
-	return s.pool
+// NewPostgresAgentStore creates a new PostgreSQL agent store
+func NewPostgresAgentStore(pool *pgxpool.Pool) *PostgresAgentStore {
+	return &PostgresAgentStore{pool: pool}
 }
 
-// NewPostgresStore creates a new PostgreSQL store
-func NewPostgresStore(connString string) (*PostgresStore, error) {
-	pool, err := pgxpool.New(context.Background(), connString)
+// Create inserts a new agent
+func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) error {
+	if err := agent.Validate(); err != nil {
+		return err
+	}
+
+	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+	metadataJSON, _ := json.Marshal(agent.Metadata)
+
+	query := `
+		INSERT INTO agents (id, type, location, capabilities, metadata, status, tenant_id, created_at, last_seen)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`
+
+	_, err := s.pool.Exec(ctx, query,
+		agent.ID,
+		agent.Type,
+		agent.Location,
+		capabilitiesJSON,
+		metadataJSON,
+		string(agent.Status),
+		agent.TenantID,
+		agent.CreatedAt,
+		agent.LastSeen,
+	)
+
+	if IsUniqueViolation(err) {
+		return fmt.Errorf("agent with ID %s already exists", agent.ID)
+	}
+	return err
+}
+
+// Get retrieves an agent by ID
+func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.Agent, error) {
+	query := `
+		SELECT id, type, location, capabilities, metadata, status, tenant_id, created_at, last_seen
+		FROM agents
+		WHERE id = $1
+	`
+
+	var agent models.Agent
+	var capabilitiesJSON []byte
+	var metadataJSON []byte
+	var statusStr string
+
+	err := s.pool.QueryRow(ctx, query, agentID).Scan(
+		&agent.ID,
+		&agent.Type,
+		&agent.Location,
+		&capabilitiesJSON,
+		&metadataJSON,
+		&statusStr,
+		&agent.TenantID,
+		&agent.CreatedAt,
+		&agent.LastSeen,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, fmt.Errorf("agent not found: %w", err)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to create connection pool: %w", err)
+		return nil, err
 	}
 
-	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	agent.Status = models.AgentStatus(statusStr)
+	json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
+	json.Unmarshal(metadataJSON, &agent.Metadata)
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	return &agent, nil
+}
+
+// Update updates an agent
+func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) error {
+	if err := agent.Validate(); err != nil {
+		return err
 	}
 
-	return &PostgresStore{pool: pool}, nil
-}
+	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+	metadataJSON, _ := json.Marshal(agent.Metadata)
 
-// Close closes the connection pool
-func (s *PostgresStore) Close() {
-	s.pool.Close()
-}
+	query := `
+		UPDATE agents
+		SET type = $2, location = $3, capabilities = $4, metadata = $5, status = $6, last_seen = $7
+		WHERE id = $1
+	`
 
-// Health checks if the database is healthy
-func (s *PostgresStore) Health(ctx context.Context) error {
-	return s.pool.Ping(ctx)
-}
+	result, err := s.pool.Exec(ctx, query,
+		agent.ID,
+		agent.Type,
+		agent.Location,
+		capabilitiesJSON,
+		metadataJSON,
+		string(agent.Status),
+		agent.LastSeen,
+	)
 
-// IsUniqueViolation checks if error is a unique violation
-func IsUniqueViolation(err error) bool {
-	if pgErr, ok := err.(*pgconn.PgError); ok {
-		return pgErr.Code == "23505" // unique_violation
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("agent not found")
 	}
-	return false
+	return err
 }
 
-// IsNotFound checks if error indicates not found
-func IsNotFound(err error) bool {
-	if pgErr, ok := err.(*pgconn.PgError); ok {
-		return pgErr.Code == "02000" // no_data_found
+// Delete removes an agent
+func (s *PostgresAgentStore) Delete(ctx context.Context, agentID string) error {
+	query := `DELETE FROM agents WHERE id = $1`
+	result, err := s.pool.Exec(ctx, query, agentID)
+	if err != nil {
+		return err
 	}
-	return errors.Is(err, pgx.ErrNoRows)
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("agent not found")
+	}
+	return nil
+}
+
+// List retrieves agents with filters
+func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([]*models.Agent, error) {
+	query := `SELECT id, type, location, capabilities, metadata, status, tenant_id, created_at, last_seen FROM agents WHERE 1=1`
+	args := []interface{}{}
+	argIndex := 1
+
+	if filters == nil {
+		filters = &AgentFilters{Limit: 100}
+	}
+
+	if filters.TenantID != "" {
+		query += fmt.Sprintf(" AND tenant_id = $%d", argIndex)
+		args = append(args, filters.TenantID)
+		argIndex++
+	}
+
+	if filters.Type != "" {
+		query += fmt.Sprintf(" AND type = $%d", argIndex)
+		args = append(args, filters.Type)
+		argIndex++
+	}
+
+	if filters.Location != "" {
+		query += fmt.Sprintf(" AND location = $%d", argIndex)
+		args = append(args, filters.Location)
+		argIndex++
+	}
+
+	if filters.Status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argIndex)
+		args = append(args, string(filters.Status))
+		argIndex++
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	if filters.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, filters.Limit)
+		argIndex++
+	}
+
+	if filters.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, filters.Offset)
+		argIndex++
+	}
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var agents []*models.Agent
+	for rows.Next() {
+		var agent models.Agent
+		var capabilitiesJSON []byte
+		var metadataJSON []byte
+		var statusStr string
+
+		err := rows.Scan(
+			&agent.ID,
+			&agent.Type,
+			&agent.Location,
+			&capabilitiesJSON,
+			&metadataJSON,
+			&statusStr,
+			&agent.TenantID,
+			&agent.CreatedAt,
+			&agent.LastSeen,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		agent.Status = models.AgentStatus(statusStr)
+		json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
+		json.Unmarshal(metadataJSON, &agent.Metadata)
+		agents = append(agents, &agent)
+	}
+
+	return agents, rows.Err()
+}
+
+// UpdateLastSeen updates the agent's last seen timestamp
+func (s *PostgresAgentStore) UpdateLastSeen(ctx context.Context, agentID string) error {
+	query := `
+		UPDATE agents
+		SET last_seen = $1, status = 'online'
+		WHERE id = $2
+	`
+	result, err := s.pool.Exec(ctx, query, time.Now(), agentID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("agent not found")
+	}
+	return nil
 }
 
