@@ -7,7 +7,6 @@ import (
 
 	"github.com/acb/internal/models"
 	"github.com/acb/internal/storage"
-	"github.com/google/uuid"
 )
 
 // Service provides agent registry operations
