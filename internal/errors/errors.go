@@ -1,3 +1,10 @@
+package errors
+
+import (
+	"errors"
+	"fmt"
+)
+
 var (
 	ErrExpiredToken = errors.New("token expired")
 )

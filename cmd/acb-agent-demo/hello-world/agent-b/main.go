@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/acb/pkg/acb"
+	"github.com/acb/pkg/acb-sdk"
 )
 
 func main() {

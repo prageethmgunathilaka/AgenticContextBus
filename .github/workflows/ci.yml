@@ -13,6 +13,10 @@ env:
   GO_VERSION: '1.21'
   MIN_COVERAGE: 90
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     name: Run Tests & Coverage Check
