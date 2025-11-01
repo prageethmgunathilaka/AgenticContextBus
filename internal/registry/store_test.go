@@ -1,4 +1,4 @@
-package storage
+package registry
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/acb/internal/models"
+	"github.com/acb/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestPostgresAgentStore_Create(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -75,7 +76,7 @@ func TestPostgresAgentStore_Get(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -111,7 +112,7 @@ func TestPostgresAgentStore_Update(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -147,7 +148,7 @@ func TestPostgresAgentStore_List(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -169,7 +170,7 @@ func TestPostgresAgentStore_List(t *testing.T) {
 	}
 
 	// Test List
-	filters := &AgentFilters{
+	filters := &storage.AgentFilters{
 		TenantID: "default",
 		Limit:    10,
 	}
@@ -189,7 +190,7 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 

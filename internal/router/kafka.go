@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/acb/internal/models"
-	"github.com/acb/internal/storage"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
 )
@@ -155,7 +154,7 @@ func (c *KafkaConsumer) Close() error {
 // Router handles message routing
 type Router struct {
 	producer *KafkaProducer
-	idStore  storage.IdempotencyStore // Will be implemented
+	idStore  IdempotencyStore // Will be implemented
 }
 
 // NewRouter creates a new message router

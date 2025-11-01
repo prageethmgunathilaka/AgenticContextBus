@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/acb/internal/storage"
 )
 
 // IdempotencyStore interface for idempotency tracking
