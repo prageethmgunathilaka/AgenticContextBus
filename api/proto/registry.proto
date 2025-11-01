@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package acb.v1;
+
+option go_package = "github.com/acb/api/proto/acbv1";
+
+import "api/proto/common.proto";
+
+// AgentRegistry service for agent management
+service AgentRegistry {
+  // Register a new agent with ACB hub
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Unregister an agent
+  rpc Unregister(UnregisterRequest) returns (UnregisterResponse);
+
+  // Send heartbeat to update agent's last seen timestamp
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Discover agents by filters
+  rpc Discover(DiscoverRequest) returns (DiscoverResponse);
+
+  // Get agent details by ID
+  rpc GetAgent(GetAgentRequest) returns (GetAgentResponse);
+
+  // List agents with optional filters
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+}
+
+// RegisterRequest registers a new agent
+message RegisterRequest {
+  string id = 1;                          // Unique agent identifier (required)
+  string type = 2;                        // Agent type (required, e.g., "ml", "rpa", "chatbot")
+  string location = 3;                     // Physical/logical location (optional)
+  repeated string capabilities = 4;        // What this agent can do (optional)
+  map<string, string> metadata = 5;       // Custom metadata (optional)
+}
+
+// RegisterResponse returns the registered agent
+message RegisterResponse {
+  Agent agent = 1;
+}
+
+// UnregisterRequest unregisters an agent
+message UnregisterRequest {
+  string agent_id = 1;                    // Agent ID to unregister (required)
+}
+
+// UnregisterResponse confirms unregistration
+message UnregisterResponse {
+  bool success = 1;
+}
+
+// HeartbeatRequest updates agent's last seen timestamp
+message HeartbeatRequest {
+  string agent_id = 1;                    // Agent ID (required)
+}
+
+// HeartbeatResponse acknowledges heartbeat
+message HeartbeatResponse {
+  bool acknowledged = 1;
+  google.protobuf.Timestamp last_seen = 2;
+}
+
+// DiscoverRequest discovers agents by filters
+message DiscoverRequest {
+  string type = 1;                        // Filter by agent type (optional)
+  string location = 2;                    // Filter by location (optional)
+  repeated string capabilities = 3;        // Filter by capabilities (optional, any match)
+  AgentStatus status = 4;                 // Filter by status (optional)
+  PaginationRequest pagination = 5;      // Pagination (optional)
+}
+
+// DiscoverResponse returns matching agents
+message DiscoverResponse {
+  repeated Agent agents = 1;
+  PaginationResponse pagination = 2;
+}
+
+// GetAgentRequest gets agent details
+message GetAgentRequest {
+  string agent_id = 1;                    // Agent ID (required)
+}
+
+// GetAgentResponse returns agent details
+message GetAgentResponse {
+  Agent agent = 1;
+}
+
+// ListAgentsRequest lists agents with filters
+message ListAgentsRequest {
+  string type = 1;                        // Filter by agent type (optional)
+  string location = 2;                    // Filter by location (optional)
+  repeated string capabilities = 3;      // Filter by capabilities (optional)
+  AgentStatus status = 4;                 // Filter by status (optional)
+  PaginationRequest pagination = 5;      // Pagination (optional)
+}
+
+// ListAgentsResponse returns list of agents
+message ListAgentsResponse {
+  repeated Agent agents = 1;
+  PaginationResponse pagination = 2;
+}
+

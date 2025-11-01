@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package acb.v1;
+
+option go_package = "github.com/acb/api/proto/acbv1";
+
+import "api/proto/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// StreamService for large context transfers (1-100MB)
+service StreamService {
+  // StreamContext uploads a large context via streaming chunks
+  rpc StreamContext(stream ContextChunk) returns (StreamResponse);
+
+  // ReceiveContext downloads a large context via streaming chunks
+  rpc ReceiveContext(ReceiveContextRequest) returns (stream ContextChunk);
+
+  // GetStreamProgress gets the progress of an ongoing stream
+  rpc GetStreamProgress(StreamProgressRequest) returns (StreamProgressResponse);
+}
+
+// StreamStatus represents the status of a stream
+enum StreamStatus {
+  STREAM_STATUS_UNSPECIFIED = 0;
+  STREAM_STATUS_PENDING = 1;      // Stream initialized but no chunks received
+  STREAM_STATUS_IN_PROGRESS = 2;  // Chunks being received
+  STREAM_STATUS_COMPLETED = 3;    // All chunks received and validated
+  STREAM_STATUS_FAILED = 4;       // Stream failed (checksum mismatch, timeout, etc.)
+  STREAM_STATUS_CANCELLED = 5;    // Stream cancelled by client
+}
+
+// StreamInitRequest initializes a new stream (first chunk)
+message StreamInitRequest {
+  string type = 1;                        // Context type (required)
+  int64 total_size = 2;                  // Total size in bytes (required)
+  map<string, string> metadata = 3;      // Context metadata (optional)
+  AccessControl access_control = 4;       // Who can access (required)
+  int64 ttl_seconds = 5;                 // Time to live in seconds (optional)
+}
+
+// ContextChunk represents a chunk of data in a stream
+message ContextChunk {
+  oneof chunk_type {
+    StreamInitRequest init = 1;          // First chunk: initialization
+    StreamData data = 2;                  // Subsequent chunks: data
+  }
+}
+
+// StreamData contains chunk data
+message StreamData {
+  int32 chunk_index = 1;                  // Zero-based chunk index (required)
+  bytes data = 2;                        // Chunk data (max 1MB) (required)
+  int32 chunk_size = 3;                  // Size of this chunk in bytes (required)
+  bool is_last = 4;                      // True if this is the last chunk (required)
+}
+
+// StreamResponse confirms stream creation
+message StreamResponse {
+  string stream_id = 1;                   // Unique stream identifier
+  string context_id = 2;                 // Created context ID (when stream completes)
+  int32 recommended_chunk_size = 3;      // Recommended chunk size (1MB)
+  StreamStatus status = 4;                // Current stream status
+}
+
+// ReceiveContextRequest requests to receive a streamed context
+message ReceiveContextRequest {
+  string context_id = 1;                 // Context ID to receive (required)
+  int32 chunk_size = 2;                 // Preferred chunk size (optional, default: 1MB)
+}
+
+// StreamProgressRequest gets progress of a stream
+message StreamProgressRequest {
+  string stream_id = 1;                 // Stream ID (required)
+}
+
+// StreamProgressResponse returns stream progress
+message StreamProgressResponse {
+  string stream_id = 1;
+  StreamStatus status = 2;
+  int64 bytes_received = 3;             // Total bytes received so far
+  int64 total_bytes = 4;                // Total expected bytes
+  double progress = 5;                  // Progress percentage (0.0 to 1.0)
+  string checksum = 6;                  // Final SHA-256 checksum (when completed)
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  string error_message = 9;              // Error message if status is FAILED
+}
+
