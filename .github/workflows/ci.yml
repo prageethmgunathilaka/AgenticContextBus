@@ -88,6 +88,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librdkafka-dev
+
       - name: Install dependencies
         run: |
           go mod download
@@ -188,6 +193,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librdkafka-dev
+
       - name: Install dependencies
         run: |
           go mod download
@@ -229,7 +239,7 @@ jobs:
 
   build:
     name: Build Binaries
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: [test, lint, format-check]
     
     strategy:
@@ -245,17 +255,41 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librdkafka-dev
+
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install librdkafka
+
       - name: Install dependencies
         run: |
           go mod download
 
-      - name: Build binaries
+      - name: Build binaries (Unix)
+        if: matrix.os != 'windows-latest'
         run: |
           echo "Building ACB server..."
           go build -o bin/acb-server ./cmd/acb-server
           echo "Building demo agents..."
           go build -o bin/agent-a ./cmd/acb-agent-demo/hello-world/agent-a
           go build -o bin/agent-b ./cmd/acb-agent-demo/hello-world/agent-b
+          echo "✅ All binaries built successfully"
+
+      - name: Build binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          echo "Building ACB server..."
+          go build -o bin/acb-server.exe ./cmd/acb-server
+          echo "Building demo agents..."
+          go build -o bin/agent-a.exe ./cmd/acb-agent-demo/hello-world/agent-a
+          go build -o bin/agent-b.exe ./cmd/acb-agent-demo/hello-world/agent-b
           echo "✅ All binaries built successfully"
 
       - name: Upload build artifacts
