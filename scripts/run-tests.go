@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 func main() {
@@ -19,7 +18,6 @@ func main() {
 		"./internal/errors/...",
 	}
 
-	totalCoverage := 0.0
 	packageCount := 0
 
 	for _, pkg := range packages {

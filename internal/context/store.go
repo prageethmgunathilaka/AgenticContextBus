@@ -1,4 +1,4 @@
-package storage
+package context
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/acb/internal/models"
+	"github.com/acb/internal/storage"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,49 +24,49 @@ func NewPostgresContextStore(pool *pgxpool.Pool) *PostgresContextStore {
 }
 
 // Create inserts a new context
-func (s *PostgresContextStore) Create(ctx context.Context, ctx *models.Context) error {
-	if err := ctx.Validate(); err != nil {
+func (s *PostgresContextStore) Create(ctx context.Context, c *models.Context) error {
+	if err := c.Validate(); err != nil {
 		return err
 	}
 
-	metadataJSON, _ := json.Marshal(ctx.Metadata)
-	accessControlJSON, _ := json.Marshal(ctx.AccessControl)
-	payloadRefJSON, _ := json.Marshal(ctx.PayloadRef)
+	metadataJSON, _ := json.Marshal(c.Metadata)
+	accessControlJSON, _ := json.Marshal(c.AccessControl)
+	payloadRefJSON, _ := json.Marshal(c.PayloadRef)
 
 	query := `
 		INSERT INTO contexts (id, type, agent_id, tenant_id, payload, payload_ref, metadata, version, schema_id, ttl_seconds, access_control, created_at, expires_at, checksum)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
 
-	ttlSeconds := int(ctx.TTL.Seconds())
+	ttlSeconds := int(c.TTL.Seconds())
 	if ttlSeconds == 0 {
 		ttlSeconds = 86400 // Default 24 hours
 	}
 
-	expiresAt := ctx.ExpiresAt
-	if expiresAt.IsZero() && ctx.TTL > 0 {
-		expiresAt = ctx.CalculateExpiration()
+	expiresAt := c.ExpiresAt
+	if expiresAt.IsZero() && c.TTL > 0 {
+		expiresAt = c.CalculateExpiration()
 	}
 
 	_, err := s.pool.Exec(ctx, query,
-		ctx.ID,
-		ctx.Type,
-		ctx.AgentID,
-		ctx.TenantID,
-		ctx.Payload,
+		c.ID,
+		c.Type,
+		c.AgentID,
+		c.TenantID,
+		c.Payload,
 		payloadRefJSON,
 		metadataJSON,
-		ctx.Version,
-		ctx.SchemaID,
+		c.Version,
+		c.SchemaID,
 		ttlSeconds,
 		accessControlJSON,
-		ctx.CreatedAt,
+		c.CreatedAt,
 		expiresAt,
-		ctx.Checksum,
+		c.Checksum,
 	)
 
-	if IsUniqueViolation(err) {
-		return fmt.Errorf("context with ID %s already exists", ctx.ID)
+	if storage.IsUniqueViolation(err) {
+		return fmt.Errorf("context with ID %s already exists", c.ID)
 	}
 	return err
 }
@@ -181,13 +182,13 @@ func (s *PostgresContextStore) Delete(ctx context.Context, contextID string) err
 }
 
 // List retrieves contexts with filters
-func (s *PostgresContextStore) List(ctx context.Context, filters *ContextFilters) ([]*models.Context, error) {
+func (s *PostgresContextStore) List(ctx context.Context, filters *storage.ContextFilters) ([]*models.Context, error) {
 	query := `SELECT id, type, agent_id, tenant_id, payload, payload_ref, metadata, version, schema_id, ttl_seconds, access_control, created_at, expires_at, checksum FROM contexts WHERE 1=1`
 	args := []interface{}{}
 	argIndex := 1
 
 	if filters == nil {
-		filters = &ContextFilters{Limit: 100}
+		filters = &storage.ContextFilters{Limit: 100}
 	}
 
 	if filters.TenantID != "" {

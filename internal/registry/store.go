@@ -1,4 +1,4 @@
-package storage
+package registry
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/acb/internal/models"
+	"github.com/acb/internal/storage"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -48,7 +49,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		agent.LastSeen,
 	)
 
-	if IsUniqueViolation(err) {
+	if storage.IsUniqueViolation(err) {
 		return fmt.Errorf("agent with ID %s already exists", agent.ID)
 	}
 	return err
@@ -138,13 +139,13 @@ func (s *PostgresAgentStore) Delete(ctx context.Context, agentID string) error {
 }
 
 // List retrieves agents with filters
-func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([]*models.Agent, error) {
+func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFilters) ([]*models.Agent, error) {
 	query := `SELECT id, type, location, capabilities, metadata, status, tenant_id, created_at, last_seen FROM agents WHERE 1=1`
 	args := []interface{}{}
 	argIndex := 1
 
 	if filters == nil {
-		filters = &AgentFilters{Limit: 100}
+		filters = &storage.AgentFilters{Limit: 100}
 	}
 
 	if filters.TenantID != "" {

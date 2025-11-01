@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/acb/internal/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +29,7 @@ func AuthMiddleware(jwtManager *JWTManager) gin.HandlerFunc {
 		token := parts[1]
 		claims, err := jwtManager.ValidateToken(token)
 		if err != nil {
-			if errors.Is(err, errors.ErrExpiredToken) {
+			if err == ErrExpiredToken {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "token expired"})
 			} else {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
