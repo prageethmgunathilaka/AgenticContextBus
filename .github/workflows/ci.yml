@@ -2,9 +2,7 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    branches:
-      - main
-      - master
+    # Trigger on PRs targeting any branch (not just main/master)
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
@@ -55,7 +53,7 @@ jobs:
       
       kafka:
         image: confluentinc/cp-kafka:7.5.0
-        depends-on:
+        depends_on:
           - zookeeper
         env:
           KAFKA_BROKER_ID: 1
