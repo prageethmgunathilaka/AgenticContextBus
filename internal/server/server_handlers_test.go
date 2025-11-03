@@ -169,6 +169,42 @@ func TestContextHandlers_CRUD(t *testing.T) {
     if w.Code != http.StatusNoContent { t.Fatalf("delete expected 204, got %d", w.Code) }
 }
 
+func TestHandlers_BadBodiesAndNotFound(t *testing.T) {
+    httpSrv := makeServerForHandlersTest(t)
+    jwt := httpSrv.jwtManager
+    hdr := authHeader(t, jwt)
+
+    // registerAgent bad body
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("POST", "/api/v1/agents", bytes.NewBufferString("{}"))
+    req.Header.Set("Authorization", hdr)
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusBadRequest { t.Fatalf("register bad body expected 400, got %d", w.Code) }
+
+    // createContext bad body
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("POST", "/api/v1/contexts", bytes.NewBufferString("{}"))
+    req.Header.Set("Authorization", hdr)
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusBadRequest { t.Fatalf("create ctx bad body expected 400, got %d", w.Code) }
+
+    // getAgent not found
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("GET", "/api/v1/agents/missing", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusNotFound { t.Fatalf("get missing expected 404, got %d", w.Code) }
+
+    // deleteContext not found
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("DELETE", "/api/v1/contexts/missing", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusNotFound { t.Fatalf("delete missing expected 404, got %d", w.Code) }
+}
+
 func TestAgentHandlers_CRUD(t *testing.T) {
     httpSrv := makeServerForHandlersTest(t)
     jwt := httpSrv.jwtManager
@@ -217,6 +253,13 @@ func TestAgentHandlers_CRUD(t *testing.T) {
     req.Header.Set("Authorization", hdr)
     httpSrv.router.ServeHTTP(w, req)
     if w.Code != http.StatusNoContent { t.Fatalf("delete expected 204, got %d", w.Code) }
+
+    // get after delete -> 404
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("GET", "/api/v1/agents/agent-x", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusNotFound { t.Fatalf("get after delete expected 404, got %d", w.Code) }
 }
 
 
