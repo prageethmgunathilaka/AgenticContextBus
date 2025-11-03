@@ -250,26 +250,26 @@ func TestCalculateChecksum(t *testing.T) {
 }
 
 func TestManager_Update_TTLAndAccessControl(t *testing.T) {
-    mockStore := NewMockContextStore()
-    mgr := NewManager(mockStore)
+	mockStore := NewMockContextStore()
+	mgr := NewManager(mockStore)
 
-    created, err := mgr.Create(context.Background(), &CreateRequest{
-        Type:     "doc",
-        AgentID:  "agent-1",
-        TenantID: "default",
-        Payload:  []byte("p"),
-        AccessControl: models.AccessControl{Scope: models.ScopePrivate},
-        TTL: time.Minute,
-    })
-    require.NoError(t, err)
+	created, err := mgr.Create(context.Background(), &CreateRequest{
+		Type:     "doc",
+		AgentID:  "agent-1",
+		TenantID: "default",
+		Payload:  []byte("p"),
+		AccessControl: models.AccessControl{Scope: models.ScopePrivate},
+		TTL:      time.Minute,
+	})
+	require.NoError(t, err)
 
-    // Now update without payload but with TTL and AccessControl change
-    before := created.ExpiresAt
-    updated, err := mgr.Update(context.Background(), created.ID, &UpdateRequest{
-        AccessControl: models.AccessControl{Scope: models.ScopePublic},
-        TTL:           2 * time.Minute,
-    })
-    require.NoError(t, err)
-    assert.Equal(t, models.ScopePublic, updated.AccessControl.Scope)
-    assert.True(t, updated.ExpiresAt.After(before))
+	// Now update without payload but with TTL and AccessControl change
+	before := created.ExpiresAt
+	updated, err := mgr.Update(context.Background(), created.ID, &UpdateRequest{
+		AccessControl: models.AccessControl{Scope: models.ScopePublic},
+		TTL:           2 * time.Minute,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, models.ScopePublic, updated.AccessControl.Scope)
+	assert.True(t, updated.ExpiresAt.After(before))
 }

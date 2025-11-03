@@ -2,7 +2,7 @@ package registry
 
 import (
 	"context"
-    "encoding/json"
+	"encoding/json"
 	"fmt"
 	"time"
 
