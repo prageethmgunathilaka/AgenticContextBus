@@ -287,8 +287,8 @@ func TestHandlers_NilContextManager(t *testing.T) {
 	httpSrv := NewHTTPServer("8080", nil, nil, jwtManager, auth.NewRBAC())
 	hdr := authHeader(t, jwtManager)
 
-	w := httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/v1/contexts", nil)
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("GET", "/api/v1/contexts", nil)
 	req.Header.Set("Authorization", hdr)
 	httpSrv.router.ServeHTTP(w, req)
 	if w.Code != http.StatusInternalServerError {
@@ -310,8 +310,8 @@ func TestAgentHandlers_CRUD(t *testing.T) {
 		"metadata":     map[string]string{"k": "v"},
 	}
 	body, _ := json.Marshal(reg)
-	w := httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/v1/agents", bytes.NewBuffer(body))
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("POST", "/api/v1/agents", bytes.NewBuffer(body))
 	req.Header.Set("Authorization", hdr)
 	req.Header.Set("Content-Type", "application/json")
 	httpSrv.router.ServeHTTP(w, req)
