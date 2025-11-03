@@ -130,17 +130,17 @@ func TestCorsMiddleware(t *testing.T) {
 }
 
 func TestCorsPreflight(t *testing.T) {
-    gin.SetMode(gin.TestMode)
+	gin.SetMode(gin.TestMode)
 
-    router := gin.New()
-    router.Use(corsMiddleware())
-    router.OPTIONS("/test", func(c *gin.Context) { c.String(200, "ok") })
+	router := gin.New()
+	router.Use(corsMiddleware())
+	router.OPTIONS("/test", func(c *gin.Context) { c.String(200, "ok") })
 
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("OPTIONS", "/test", nil)
-    router.ServeHTTP(w, req)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "/test", nil)
+	router.ServeHTTP(w, req)
 
-    assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.Equal(t, http.StatusNoContent, w.Code)
 }
 
 func TestRequestIDMiddleware(t *testing.T) {
@@ -160,18 +160,18 @@ func TestRequestIDMiddleware(t *testing.T) {
 }
 
 func TestRequestIDMiddleware_Passthrough(t *testing.T) {
-    gin.SetMode(gin.TestMode)
+	gin.SetMode(gin.TestMode)
 
-    router := gin.New()
-    router.Use(requestIDMiddleware())
-    router.GET("/test", func(c *gin.Context) {
-        c.String(200, "ok")
-    })
+	router := gin.New()
+	router.Use(requestIDMiddleware())
+	router.GET("/test", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
 
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("GET", "/test", nil)
-    req.Header.Set("X-Request-ID", "abc123")
-    router.ServeHTTP(w, req)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("X-Request-ID", "abc123")
+	router.ServeHTTP(w, req)
 
-    assert.Equal(t, "abc123", w.Header().Get("X-Request-ID"))
+	assert.Equal(t, "abc123", w.Header().Get("X-Request-ID"))
 }

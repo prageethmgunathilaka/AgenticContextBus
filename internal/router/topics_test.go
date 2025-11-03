@@ -20,5 +20,3 @@ func TestEnsureTopic_Noop(t *testing.T) {
 		t.Fatalf("EnsureTopic returned error: %v", err)
 	}
 }
-
-

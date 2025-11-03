@@ -254,12 +254,12 @@ func TestManager_Update_TTLAndAccessControl(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	created, err := mgr.Create(context.Background(), &CreateRequest{
-		Type:     "doc",
-		AgentID:  "agent-1",
-		TenantID: "default",
-		Payload:  []byte("p"),
+		Type:          "doc",
+		AgentID:       "agent-1",
+		TenantID:      "default",
+		Payload:       []byte("p"),
 		AccessControl: models.AccessControl{Scope: models.ScopePrivate},
-		TTL:      time.Minute,
+		TTL:           time.Minute,
 	})
 	require.NoError(t, err)
 

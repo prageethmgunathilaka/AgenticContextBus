@@ -44,7 +44,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-        capabilities,
+		capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.TenantID,
@@ -75,7 +75,7 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 		&agent.ID,
 		&agent.Type,
 		&agent.Location,
-        &capabilities,
+		&capabilities,
 		&metadataJSON,
 		&statusStr,
 		&agent.TenantID,
@@ -122,7 +122,7 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-        capabilities,
+		capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.LastSeen,
@@ -211,7 +211,7 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 			&agent.ID,
 			&agent.Type,
 			&agent.Location,
-            &capabilities,
+			&capabilities,
 			&metadataJSON,
 			&statusStr,
 			&agent.TenantID,
@@ -222,11 +222,11 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 			return nil, err
 		}
 
-			agent.Status = models.AgentStatus(statusStr)
-			agent.Capabilities = capabilities
-			if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
-			}
+		agent.Status = models.AgentStatus(statusStr)
+		agent.Capabilities = capabilities
+		if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+		}
 		agents = append(agents, &agent)
 	}
 

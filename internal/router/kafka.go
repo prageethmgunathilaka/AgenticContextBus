@@ -143,10 +143,10 @@ func (c *KafkaConsumer) Consume(ctx context.Context, handler func(*models.Messag
 				continue
 			}
 
-            // Commit offset
-            if _, err := c.consumer.CommitMessage(msg); err != nil {
-                return fmt.Errorf("failed to commit message: %w", err)
-            }
+			// Commit offset
+			if _, err := c.consumer.CommitMessage(msg); err != nil {
+				return fmt.Errorf("failed to commit message: %w", err)
+			}
 		}
 	}
 }

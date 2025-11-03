@@ -222,7 +222,7 @@ func (s *PostgresContextStore) List(ctx context.Context, filters *ContextFilters
 		argIndex++
 	}
 
-    if filters.Offset > 0 {
+	if filters.Offset > 0 {
 		query += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, filters.Offset)
 	}

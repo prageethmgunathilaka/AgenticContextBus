@@ -79,53 +79,50 @@ func TestRequireRole(t *testing.T) {
 	}
 }
 
-
 func TestRBACMiddleware_Forbidden(t *testing.T) {
-    gin.SetMode(gin.TestMode)
-    jwt := NewJWTManager("s")
-    token, err := jwt.GenerateAccessToken("a", "default", []string{"observer"})
-    if err != nil {
-        t.Fatalf("token error: %v", err)
-    }
+	gin.SetMode(gin.TestMode)
+	jwt := NewJWTManager("s")
+	token, err := jwt.GenerateAccessToken("a", "default", []string{"observer"})
+	if err != nil {
+		t.Fatalf("token error: %v", err)
+	}
 
-    r := gin.New()
-    r.GET("/p",
-        AuthMiddleware(jwt),
-        RBACMiddleware(NewRBAC(), PermissionContextWrite),
-        func(c *gin.Context) { c.String(200, "ok") },
-    )
+	r := gin.New()
+	r.GET("/p",
+		AuthMiddleware(jwt),
+		RBACMiddleware(NewRBAC(), PermissionContextWrite),
+		func(c *gin.Context) { c.String(200, "ok") },
+	)
 
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("GET", "/p", nil)
-    req.Header.Set("Authorization", "Bearer "+token)
-    r.ServeHTTP(w, req)
-    if w.Code != http.StatusForbidden {
-        t.Fatalf("expected 403, got %d", w.Code)
-    }
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/p", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", w.Code)
+	}
 }
 
 func TestRBACMiddleware_Allowed(t *testing.T) {
-    gin.SetMode(gin.TestMode)
-    jwt := NewJWTManager("s")
-    token, err := jwt.GenerateAccessToken("a", "default", []string{"agent-full"})
-    if err != nil {
-        t.Fatalf("token error: %v", err)
-    }
+	gin.SetMode(gin.TestMode)
+	jwt := NewJWTManager("s")
+	token, err := jwt.GenerateAccessToken("a", "default", []string{"agent-full"})
+	if err != nil {
+		t.Fatalf("token error: %v", err)
+	}
 
-    r := gin.New()
-    r.GET("/p",
-        AuthMiddleware(jwt),
-        RBACMiddleware(NewRBAC(), PermissionContextWrite),
-        func(c *gin.Context) { c.String(200, "ok") },
-    )
+	r := gin.New()
+	r.GET("/p",
+		AuthMiddleware(jwt),
+		RBACMiddleware(NewRBAC(), PermissionContextWrite),
+		func(c *gin.Context) { c.String(200, "ok") },
+	)
 
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("GET", "/p", nil)
-    req.Header.Set("Authorization", "Bearer "+token)
-    r.ServeHTTP(w, req)
-    if w.Code != http.StatusOK {
-        t.Fatalf("expected 200, got %d", w.Code)
-    }
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/p", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
 }
-
-

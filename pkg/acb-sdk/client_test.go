@@ -47,5 +47,3 @@ func TestClientNotImplementedAPIs(t *testing.T) {
 		t.Fatal("expected error for Broadcast")
 	}
 }
-
-

@@ -19,5 +19,3 @@ func TestConstantsHaveExpectedRanges(t *testing.T) {
 		t.Fatal("invalid pagination limits")
 	}
 }
-
-

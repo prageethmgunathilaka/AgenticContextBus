@@ -42,5 +42,3 @@ func TestRequestAndSubscribe(t *testing.T) {
 		t.Fatal("expected Unsubscribe error in MVP")
 	}
 }
-
-

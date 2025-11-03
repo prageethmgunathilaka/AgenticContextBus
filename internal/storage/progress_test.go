@@ -48,5 +48,3 @@ func TestRedisProgressStore_CRUD(t *testing.T) {
 		t.Fatalf("expected error after delete")
 	}
 }
-
-

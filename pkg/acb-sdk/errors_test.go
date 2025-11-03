@@ -16,5 +16,3 @@ func TestSDKErrorWrapAndUnwrap(t *testing.T) {
 		t.Fatal("unwrap failed")
 	}
 }
-
-

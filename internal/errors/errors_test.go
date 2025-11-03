@@ -51,5 +51,3 @@ func TestConvenienceErrors(t *testing.T) {
 		t.Fatal("service unavailable code mismatch")
 	}
 }
-
-
