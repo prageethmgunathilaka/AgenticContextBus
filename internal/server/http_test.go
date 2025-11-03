@@ -30,6 +30,24 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "healthy")
 }
 
+func TestHTTPServer_Metrics(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+
+    httpSrv := NewHTTPServer(
+        "8080",
+        nil, // registrySvc
+        nil, // contextMgr
+        auth.NewJWTManager("test-secret"),
+        auth.NewRBAC(),
+    )
+
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("GET", "/metrics", nil)
+    httpSrv.router.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusOK, w.Code)
+}
+
 func TestHTTPServer_Login(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
