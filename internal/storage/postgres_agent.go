@@ -27,11 +27,11 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-    // Handle nil capabilities - pass nil instead of marshaling to avoid "null" string
-    var capabilities interface{}
-    if len(agent.Capabilities) > 0 {
-        capabilities = agent.Capabilities
-    }
+	// Handle nil capabilities - pass nil instead of marshaling to avoid "null" string
+	var capabilities interface{}
+	if len(agent.Capabilities) > 0 {
+		capabilities = agent.Capabilities
+	}
 
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 
@@ -103,11 +103,11 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-    // Handle nil capabilities - pass nil instead of marshaling to avoid "null" string
-    var capabilities interface{}
-    if len(agent.Capabilities) > 0 {
-        capabilities = agent.Capabilities
-    }
+	// Handle nil capabilities - pass nil instead of marshaling to avoid "null" string
+	var capabilities interface{}
+	if len(agent.Capabilities) > 0 {
+		capabilities = agent.Capabilities
+	}
 
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 

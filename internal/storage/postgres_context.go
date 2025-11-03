@@ -114,17 +114,17 @@ func (s *PostgresContextStore) Get(ctx context.Context, contextID string) (*mode
 		c.ExpiresAt = expiresAt.Time
 	}
 
-    if err := json.Unmarshal(metadataJSON, &c.Metadata); err != nil {
-        return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
-    }
-    if err := json.Unmarshal(accessControlJSON, &c.AccessControl); err != nil {
-        return nil, fmt.Errorf("failed to unmarshal access_control: %w", err)
-    }
-    if len(payloadRefJSON) > 0 {
-        if err := json.Unmarshal(payloadRefJSON, &c.PayloadRef); err != nil {
-            return nil, fmt.Errorf("failed to unmarshal payload_ref: %w", err)
-        }
-    }
+	if err := json.Unmarshal(metadataJSON, &c.Metadata); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+	}
+	if err := json.Unmarshal(accessControlJSON, &c.AccessControl); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal access_control: %w", err)
+	}
+	if len(payloadRefJSON) > 0 {
+		if err := json.Unmarshal(payloadRefJSON, &c.PayloadRef); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal payload_ref: %w", err)
+		}
+	}
 
 	return &c, nil
 }
@@ -267,17 +267,17 @@ func (s *PostgresContextStore) List(ctx context.Context, filters *ContextFilters
 			c.ExpiresAt = expiresAt.Time
 		}
 
-        if err := json.Unmarshal(metadataJSON, &c.Metadata); err != nil {
-            return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
-        }
-        if err := json.Unmarshal(accessControlJSON, &c.AccessControl); err != nil {
-            return nil, fmt.Errorf("failed to unmarshal access_control: %w", err)
-        }
-        if len(payloadRefJSON) > 0 {
-            if err := json.Unmarshal(payloadRefJSON, &c.PayloadRef); err != nil {
-                return nil, fmt.Errorf("failed to unmarshal payload_ref: %w", err)
-            }
-        }
+		if err := json.Unmarshal(metadataJSON, &c.Metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+		}
+		if err := json.Unmarshal(accessControlJSON, &c.AccessControl); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal access_control: %w", err)
+		}
+		if len(payloadRefJSON) > 0 {
+			if err := json.Unmarshal(payloadRefJSON, &c.PayloadRef); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal payload_ref: %w", err)
+			}
+		}
 
 		contexts = append(contexts, &c)
 	}
