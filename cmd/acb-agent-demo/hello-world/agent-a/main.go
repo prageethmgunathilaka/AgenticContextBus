@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/acb/pkg/acb"
+	"github.com/acb/pkg/acb-sdk"
 )
 
 func main() {
@@ -23,9 +23,9 @@ func main() {
 
 	// Register agent
 	req := &acb.RegisterAgentRequest{
-		ID:       "agent-a",
-		Type:     "hello-world",
-		Location: "local",
+		ID:           "agent-a",
+		Type:         "hello-world",
+		Location:     "local",
 		Capabilities: []string{"greeting"},
 		Metadata: map[string]string{
 			"version": "1.0",
@@ -66,4 +66,3 @@ func main() {
 	fmt.Println("Agent A running... Press Ctrl+C to stop")
 	select {}
 }
-

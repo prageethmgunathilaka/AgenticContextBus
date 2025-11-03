@@ -41,4 +41,3 @@ func (e *SDKError) WithError(err error) *SDKError {
 	e.Err = err
 	return e
 }
-

@@ -4,13 +4,13 @@ import "github.com/acb/internal/models"
 
 // Types exports SDK types
 type (
-	Agent            = models.Agent
-	Context          = models.Context
-	Message          = models.Message
-	AgentStatus      = models.AgentStatus
-	MessageType      = models.MessageType
-	ContextScope     = models.ContextScope
-	AccessControl    = models.AccessControl
+	Agent         = models.Agent
+	Context       = models.Context
+	Message       = models.Message
+	AgentStatus   = models.AgentStatus
+	MessageType   = models.MessageType
+	ContextScope  = models.ContextScope
+	AccessControl = models.AccessControl
 )
 
 // Constants exports SDK constants
@@ -29,4 +29,3 @@ const (
 	MessageTypeQuery    = models.MessageTypeQuery
 	MessageTypeResponse = models.MessageTypeResponse
 )
-

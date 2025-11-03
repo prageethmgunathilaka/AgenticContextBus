@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/acb/internal/auth"
-	"github.com/acb/internal/context"
+	contextmgr "github.com/acb/internal/context"
 	"github.com/acb/internal/registry"
 	"github.com/acb/internal/server"
 	"github.com/acb/internal/storage"
@@ -49,7 +49,7 @@ func main() {
 
 	// Initialize services
 	registrySvc := registry.NewService(agentStore)
-	contextMgr := context.NewManager(contextStore)
+	contextMgr := contextmgr.NewManager(contextStore)
 
 	// Initialize auth
 	jwtManager := auth.NewJWTManager(jwtSecret)

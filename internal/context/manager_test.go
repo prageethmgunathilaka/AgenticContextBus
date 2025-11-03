@@ -88,10 +88,10 @@ func TestManager_Create(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -110,10 +110,10 @@ func TestManager_Get(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -132,10 +132,10 @@ func TestManager_Update(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -160,10 +160,10 @@ func TestManager_Delete(t *testing.T) {
 	mgr := NewManager(mockStore)
 
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -186,10 +186,10 @@ func TestManager_List(t *testing.T) {
 	// Create multiple contexts
 	for i := 0; i < 3; i++ {
 		req := &CreateRequest{
-			Type:    "user-profile",
-			AgentID: "agent-1",
+			Type:     "user-profile",
+			AgentID:  "agent-1",
 			TenantID: "default",
-			Payload: []byte("test data"),
+			Payload:  []byte("test data"),
 			AccessControl: models.AccessControl{
 				Scope: models.ScopePublic,
 			},
@@ -212,10 +212,10 @@ func TestManager_DeleteExpired(t *testing.T) {
 
 	// Create expired context
 	req := &CreateRequest{
-		Type:    "user-profile",
-		AgentID: "agent-1",
+		Type:     "user-profile",
+		AgentID:  "agent-1",
 		TenantID: "default",
-		Payload: []byte("test data"),
+		Payload:  []byte("test data"),
 		AccessControl: models.AccessControl{
 			Scope: models.ScopePublic,
 		},
@@ -249,3 +249,27 @@ func TestCalculateChecksum(t *testing.T) {
 	assert.NotEqual(t, checksum, checksum3)
 }
 
+func TestManager_Update_TTLAndAccessControl(t *testing.T) {
+	mockStore := NewMockContextStore()
+	mgr := NewManager(mockStore)
+
+	created, err := mgr.Create(context.Background(), &CreateRequest{
+		Type:          "doc",
+		AgentID:       "agent-1",
+		TenantID:      "default",
+		Payload:       []byte("p"),
+		AccessControl: models.AccessControl{Scope: models.ScopePrivate},
+		TTL:           time.Minute,
+	})
+	require.NoError(t, err)
+
+	// Now update without payload but with TTL and AccessControl change
+	before := created.ExpiresAt
+	updated, err := mgr.Update(context.Background(), created.ID, &UpdateRequest{
+		AccessControl: models.AccessControl{Scope: models.ScopePublic},
+		TTL:           2 * time.Minute,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, models.ScopePublic, updated.AccessControl.Scope)
+	assert.True(t, updated.ExpiresAt.After(before))
+}

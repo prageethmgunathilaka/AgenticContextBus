@@ -2,9 +2,6 @@ package auth
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"time"
@@ -115,4 +112,3 @@ func GenerateSecretKey() (string, error) {
 	}
 	return fmt.Sprintf("%x", key), nil
 }
-

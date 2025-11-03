@@ -1,11 +1,13 @@
-package storage
+package registry
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/acb/internal/models"
+	"github.com/acb/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +17,7 @@ func TestPostgresAgentStore_Create(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -67,7 +69,7 @@ func TestPostgresAgentStore_Create(t *testing.T) {
 	}
 
 	// Cleanup
-	agentStore.Delete(ctx, "test-agent-1")
+	_ = agentStore.Delete(ctx, "test-agent-1")
 }
 
 func TestPostgresAgentStore_Get(t *testing.T) {
@@ -75,7 +77,7 @@ func TestPostgresAgentStore_Get(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -93,7 +95,9 @@ func TestPostgresAgentStore_Get(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-get")
+	defer func() {
+		_ = agentStore.Delete(ctx, "test-agent-get")
+	}()
 
 	// Test Get
 	got, err := agentStore.Get(ctx, "test-agent-get")
@@ -111,7 +115,7 @@ func TestPostgresAgentStore_Update(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -129,7 +133,9 @@ func TestPostgresAgentStore_Update(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-update")
+	defer func() {
+		_ = agentStore.Delete(ctx, "test-agent-update")
+	}()
 
 	// Update agent
 	agent.Type = "rpa"
@@ -147,7 +153,7 @@ func TestPostgresAgentStore_List(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -157,19 +163,21 @@ func TestPostgresAgentStore_List(t *testing.T) {
 	// Create test agents
 	for i := 0; i < 3; i++ {
 		agent := &models.Agent{
-			ID:       "test-agent-list-" + string(rune(i)),
-			Type:     "ml",
-			Status:   models.AgentStatusOnline,
-			TenantID: "default",
+			ID:        "test-agent-list-" + strconv.Itoa(i),
+			Type:      "ml",
+			Status:    models.AgentStatusOnline,
+			TenantID:  "default",
 			CreatedAt: time.Now(),
-			LastSeen: time.Now(),
+			LastSeen:  time.Now(),
 		}
-		agentStore.Create(ctx, agent)
-		defer agentStore.Delete(ctx, agent.ID)
+		_ = agentStore.Create(ctx, agent)
+		defer func(id string) {
+			_ = agentStore.Delete(ctx, id)
+		}(agent.ID)
 	}
 
 	// Test List
-	filters := &AgentFilters{
+	filters := &storage.AgentFilters{
 		TenantID: "default",
 		Limit:    10,
 	}
@@ -189,7 +197,7 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
-	store, err := NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
+	store, err := storage.NewPostgresStore("postgres://acb:acb_password@localhost:5432/acb?sslmode=disable")
 	require.NoError(t, err)
 	defer store.Close()
 
@@ -207,7 +215,7 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-heartbeat")
+	defer func() { _ = agentStore.Delete(ctx, "test-agent-heartbeat") }()
 
 	// Update last seen
 	err = agentStore.UpdateLastSeen(ctx, "test-agent-heartbeat")
@@ -218,4 +226,3 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, got.LastSeen.After(agent.LastSeen))
 }
-

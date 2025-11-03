@@ -7,13 +7,12 @@ import (
 
 	"github.com/acb/internal/models"
 	"github.com/acb/internal/storage"
-	"github.com/google/uuid"
 )
 
 // Service provides agent registry operations
 type Service struct {
 	store storage.AgentStore
-	cache storage.AgentCache // Will be implemented
+	// cache storage.AgentCache // Will be implemented later
 }
 
 // NewService creates a new registry service
@@ -78,4 +77,3 @@ type RegisterRequest struct {
 	Metadata     map[string]string
 	TenantID     string
 }
-

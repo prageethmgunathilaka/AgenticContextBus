@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PostgresStore wraps PostgreSQL connection pool
@@ -64,4 +64,3 @@ func IsNotFound(err error) bool {
 	}
 	return errors.Is(err, pgx.ErrNoRows)
 }
-

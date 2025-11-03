@@ -1,3 +1,6 @@
+//go:build cgo
+// +build cgo
+
 package router
 
 import (
@@ -7,7 +10,6 @@ import (
 	"time"
 
 	"github.com/acb/internal/models"
-	"github.com/acb/internal/storage"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
 )
@@ -142,7 +144,9 @@ func (c *KafkaConsumer) Consume(ctx context.Context, handler func(*models.Messag
 			}
 
 			// Commit offset
-			c.consumer.CommitMessage(msg)
+			if _, err := c.consumer.CommitMessage(msg); err != nil {
+				return fmt.Errorf("failed to commit message: %w", err)
+			}
 		}
 	}
 }
@@ -155,7 +159,6 @@ func (c *KafkaConsumer) Close() error {
 // Router handles message routing
 type Router struct {
 	producer *KafkaProducer
-	idStore  storage.IdempotencyStore // Will be implemented
 }
 
 // NewRouter creates a new message router
@@ -207,4 +210,3 @@ func (r *Router) Request(ctx context.Context, toAgentID string, topic string, me
 	// For MVP, return immediately
 	return nil, fmt.Errorf("request-reply not fully implemented in MVP")
 }
-

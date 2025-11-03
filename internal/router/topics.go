@@ -1,11 +1,12 @@
+//go:build cgo
+// +build cgo
+
 package router
 
 import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/acb/internal/storage"
 )
 
 // IdempotencyStore interface for idempotency tracking
@@ -34,4 +35,3 @@ func (tm *TopicManager) EnsureTopic(ctx context.Context, topic string) error {
 func GetTopicName(tenantID, topic string) string {
 	return fmt.Sprintf("acb.%s.%s", tenantID, topic)
 }
-

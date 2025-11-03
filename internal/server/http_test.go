@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/acb/internal/auth"
-	"github.com/acb/internal/context"
-	"github.com/acb/internal/registry"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,6 +28,24 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "healthy")
+}
+
+func TestHTTPServer_Metrics(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	httpSrv := NewHTTPServer(
+		"8080",
+		nil, // registrySvc
+		nil, // contextMgr
+		auth.NewJWTManager("test-secret"),
+		auth.NewRBAC(),
+	)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/metrics", nil)
+	httpSrv.router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestHTTPServer_Login(t *testing.T) {
@@ -113,6 +129,20 @@ func TestCorsMiddleware(t *testing.T) {
 	assert.Contains(t, w.Header().Get("Access-Control-Allow-Origin"), "*")
 }
 
+func TestCorsPreflight(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(corsMiddleware())
+	router.OPTIONS("/test", func(c *gin.Context) { c.String(200, "ok") })
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "/test", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
 func TestRequestIDMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -129,3 +159,19 @@ func TestRequestIDMiddleware(t *testing.T) {
 	assert.NotEmpty(t, w.Header().Get("X-Request-ID"))
 }
 
+func TestRequestIDMiddleware_Passthrough(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(requestIDMiddleware())
+	router.GET("/test", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("X-Request-ID", "abc123")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, "abc123", w.Header().Get("X-Request-ID"))
+}

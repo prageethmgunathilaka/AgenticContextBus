@@ -276,4 +276,3 @@ func TestContext_CalculateExpiration(t *testing.T) {
 		t.Error("CalculateExpiration() should return future time")
 	}
 }
-

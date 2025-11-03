@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/acb/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,7 +61,7 @@ func TestRedisStore_SetNX(t *testing.T) {
 	assert.False(t, ok)
 
 	// Cleanup
-	store.Delete(ctx, "test-nx-key")
+	_ = store.Delete(ctx, "test-nx-key")
 }
 
 func TestRedisStore_Increment(t *testing.T) {
@@ -86,6 +85,5 @@ func TestRedisStore_Increment(t *testing.T) {
 	assert.Equal(t, int64(2), value)
 
 	// Cleanup
-	store.Delete(ctx, "test-counter")
+	_ = store.Delete(ctx, "test-counter")
 }
-

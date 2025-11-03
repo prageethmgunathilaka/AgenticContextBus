@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/acb/internal/models"
 )
@@ -107,4 +106,3 @@ func (s *Subscribe) WithFilter(key, value string) *Subscribe {
 	// TODO: Implement filter
 	return s
 }
-

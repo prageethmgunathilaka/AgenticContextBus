@@ -30,9 +30,9 @@ type AgentFilters struct {
 
 // ContextStore defines the interface for context storage operations
 type ContextStore interface {
-	Create(ctx context.Context, ctx *models.Context) error
+	Create(ctx context.Context, c *models.Context) error
 	Get(ctx context.Context, contextID string) (*models.Context, error)
-	Update(ctx context.Context, ctx *models.Context) error
+	Update(ctx context.Context, c *models.Context) error
 	Delete(ctx context.Context, contextID string) error
 	List(ctx context.Context, filters *ContextFilters) ([]*models.Context, error)
 	DeleteExpired(ctx context.Context) (int, error)
@@ -57,7 +57,6 @@ type AgentCache interface {
 // ContextCache defines interface for context caching
 type ContextCache interface {
 	Get(ctx context.Context, contextID string) (*models.Context, error)
-	Set(ctx context.Context, ctx *models.Context, ttl time.Duration) error
+	Set(ctx context.Context, c *models.Context, ttl time.Duration) error
 	Delete(ctx context.Context, contextID string) error
 }
-

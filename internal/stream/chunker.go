@@ -24,7 +24,7 @@ const (
 
 // StreamService handles large context streaming
 type StreamService struct {
-	progressStore interface{} // ProgressStore interface
+	// progressStore interface{} // ProgressStore interface - TODO: implement
 }
 
 // NewStreamService creates a new stream service
@@ -131,4 +131,3 @@ type InitStreamRequest struct {
 	AccessControl models.AccessControl
 	TTL           time.Duration
 }
-

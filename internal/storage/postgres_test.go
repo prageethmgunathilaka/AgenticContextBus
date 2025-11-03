@@ -45,4 +45,3 @@ func TestIsNotFound(t *testing.T) {
 	// Test other error
 	assert.False(t, IsNotFound(nil))
 }
-

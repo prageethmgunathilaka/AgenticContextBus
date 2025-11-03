@@ -1,13 +1,13 @@
-package storage
+package registry
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/acb/internal/models"
+	"github.com/acb/internal/storage"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -28,7 +28,11 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+	// For TEXT[] column, pass nil for NULL or []string for values
+	var capabilities interface{}
+	if len(agent.Capabilities) > 0 {
+		capabilities = agent.Capabilities
+	}
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 
 	query := `
@@ -40,7 +44,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-		capabilitiesJSON,
+		capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.TenantID,
@@ -48,7 +52,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		agent.LastSeen,
 	)
 
-	if IsUniqueViolation(err) {
+	if storage.IsUniqueViolation(err) {
 		return fmt.Errorf("agent with ID %s already exists", agent.ID)
 	}
 	return err
@@ -63,7 +67,7 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 	`
 
 	var agent models.Agent
-	var capabilitiesJSON []byte
+	var capabilities []string
 	var metadataJSON []byte
 	var statusStr string
 
@@ -71,7 +75,7 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 		&agent.ID,
 		&agent.Type,
 		&agent.Location,
-		&capabilitiesJSON,
+		&capabilities,
 		&metadataJSON,
 		&statusStr,
 		&agent.TenantID,
@@ -87,8 +91,10 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 	}
 
 	agent.Status = models.AgentStatus(statusStr)
-	json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
-	json.Unmarshal(metadataJSON, &agent.Metadata)
+	agent.Capabilities = capabilities
+	if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+	}
 
 	return &agent, nil
 }
@@ -99,7 +105,11 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+	// For TEXT[] column, pass nil for NULL or []string for values
+	var capabilities interface{}
+	if len(agent.Capabilities) > 0 {
+		capabilities = agent.Capabilities
+	}
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 
 	query := `
@@ -112,7 +122,7 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-		capabilitiesJSON,
+		capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.LastSeen,
@@ -138,13 +148,13 @@ func (s *PostgresAgentStore) Delete(ctx context.Context, agentID string) error {
 }
 
 // List retrieves agents with filters
-func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([]*models.Agent, error) {
+func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFilters) ([]*models.Agent, error) {
 	query := `SELECT id, type, location, capabilities, metadata, status, tenant_id, created_at, last_seen FROM agents WHERE 1=1`
 	args := []interface{}{}
 	argIndex := 1
 
 	if filters == nil {
-		filters = &AgentFilters{Limit: 100}
+		filters = &storage.AgentFilters{Limit: 100}
 	}
 
 	if filters.TenantID != "" {
@@ -182,7 +192,6 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([
 	if filters.Offset > 0 {
 		query += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, filters.Offset)
-		argIndex++
 	}
 
 	rows, err := s.pool.Query(ctx, query, args...)
@@ -194,7 +203,7 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([
 	var agents []*models.Agent
 	for rows.Next() {
 		var agent models.Agent
-		var capabilitiesJSON []byte
+		var capabilities []string
 		var metadataJSON []byte
 		var statusStr string
 
@@ -202,7 +211,7 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([
 			&agent.ID,
 			&agent.Type,
 			&agent.Location,
-			&capabilitiesJSON,
+			&capabilities,
 			&metadataJSON,
 			&statusStr,
 			&agent.TenantID,
@@ -214,8 +223,10 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *AgentFilters) ([
 		}
 
 		agent.Status = models.AgentStatus(statusStr)
-		json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
-		json.Unmarshal(metadataJSON, &agent.Metadata)
+		agent.Capabilities = capabilities
+		if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+		}
 		agents = append(agents, &agent)
 	}
 
@@ -238,4 +249,3 @@ func (s *PostgresAgentStore) UpdateLastSeen(ctx context.Context, agentID string)
 	}
 	return nil
 }
-

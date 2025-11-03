@@ -14,6 +14,10 @@ import (
 // HTTP handlers implementation
 
 func (s *HTTPServer) registerAgent(c *gin.Context) {
+	if s.registrySvc == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registry service unavailable"})
+		return
+	}
 	var req registry.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -38,6 +42,10 @@ func (s *HTTPServer) registerAgent(c *gin.Context) {
 }
 
 func (s *HTTPServer) listAgents(c *gin.Context) {
+	if s.registrySvc == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registry service unavailable"})
+		return
+	}
 	filters := &storage.AgentFilters{
 		Type:     c.Query("type"),
 		Location: c.Query("location"),
@@ -66,6 +74,10 @@ func (s *HTTPServer) listAgents(c *gin.Context) {
 }
 
 func (s *HTTPServer) getAgent(c *gin.Context) {
+	if s.registrySvc == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registry service unavailable"})
+		return
+	}
 	agentID := c.Param("agent_id")
 	agent, err := s.registrySvc.Get(c.Request.Context(), agentID)
 	if err != nil {
@@ -77,6 +89,10 @@ func (s *HTTPServer) getAgent(c *gin.Context) {
 }
 
 func (s *HTTPServer) unregisterAgent(c *gin.Context) {
+	if s.registrySvc == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registry service unavailable"})
+		return
+	}
 	agentID := c.Param("agent_id")
 	if err := s.registrySvc.Unregister(c.Request.Context(), agentID); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "agent not found"})
@@ -97,13 +113,17 @@ func (s *HTTPServer) sendHeartbeat(c *gin.Context) {
 }
 
 func (s *HTTPServer) createContext(c *gin.Context) {
+	if s.contextMgr == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "context manager unavailable"})
+		return
+	}
 	var req struct {
-		Type          string                 `json:"type" binding:"required"`
-		Payload       []byte                 `json:"payload" binding:"required"`
-		Metadata      map[string]string      `json:"metadata"`
-		Version       string                 `json:"version"`
-		AccessControl models.AccessControl   `json:"access_control" binding:"required"`
-		TTL           int                    `json:"ttl"`
+		Type          string               `json:"type" binding:"required"`
+		Payload       []byte               `json:"payload" binding:"required"`
+		Metadata      map[string]string    `json:"metadata"`
+		Version       string               `json:"version"`
+		AccessControl models.AccessControl `json:"access_control" binding:"required"`
+		TTL           int                  `json:"ttl"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -138,6 +158,10 @@ func (s *HTTPServer) createContext(c *gin.Context) {
 }
 
 func (s *HTTPServer) listContexts(c *gin.Context) {
+	if s.contextMgr == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "context manager unavailable"})
+		return
+	}
 	filters := &storage.ContextFilters{
 		Type:    c.Query("type"),
 		AgentID: c.Query("agent_id"),
@@ -165,6 +189,10 @@ func (s *HTTPServer) listContexts(c *gin.Context) {
 }
 
 func (s *HTTPServer) getContext(c *gin.Context) {
+	if s.contextMgr == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "context manager unavailable"})
+		return
+	}
 	contextID := c.Param("context_id")
 	ctx, err := s.contextMgr.Get(c.Request.Context(), contextID)
 	if err != nil {
@@ -176,6 +204,10 @@ func (s *HTTPServer) getContext(c *gin.Context) {
 }
 
 func (s *HTTPServer) updateContext(c *gin.Context) {
+	if s.contextMgr == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "context manager unavailable"})
+		return
+	}
 	contextID := c.Param("context_id")
 	var req struct {
 		Payload       []byte               `json:"payload"`
@@ -211,6 +243,10 @@ func (s *HTTPServer) updateContext(c *gin.Context) {
 }
 
 func (s *HTTPServer) deleteContext(c *gin.Context) {
+	if s.contextMgr == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "context manager unavailable"})
+		return
+	}
 	contextID := c.Param("context_id")
 	if err := s.contextMgr.Delete(c.Request.Context(), contextID); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "context not found"})
@@ -219,4 +255,3 @@ func (s *HTTPServer) deleteContext(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
-

@@ -7,16 +7,16 @@ const (
 	MaxChunkSize     = 1 * 1024 * 1024 // 1MB max
 
 	// Context size limits
-	MaxDirectContextSize   = 1 * 1024 * 1024        // 1MB
-	MaxStreamingContextSize = 100 * 1024 * 1024     // 100MB
+	MaxDirectContextSize    = 1 * 1024 * 1024   // 1MB
+	MaxStreamingContextSize = 100 * 1024 * 1024 // 100MB
 
 	// Rate limits (per agent)
-	DefaultRateLimitRequests = 1000 // requests per minute
-	DefaultRateLimitBandwidth = 100 * 1024 * 1024 // 100 MB per minute
+	DefaultRateLimitRequests    = 1000              // requests per minute
+	DefaultRateLimitBandwidth   = 100 * 1024 * 1024 // 100 MB per minute
 	DefaultMaxConcurrentStreams = 10
 
 	// Token expiration
-	DefaultAccessTokenTTL  = 3600  // 1 hour in seconds
+	DefaultAccessTokenTTL  = 3600   // 1 hour in seconds
 	DefaultRefreshTokenTTL = 604800 // 7 days in seconds
 
 	// Agent heartbeat
@@ -35,7 +35,7 @@ const (
 
 	// Kafka
 	DefaultKafkaReplicationFactor = 1
-	DefaultKafkaPartitions         = 3
+	DefaultKafkaPartitions        = 3
 
 	// Timeouts
 	DefaultHTTPTimeout = 30 // seconds
@@ -49,9 +49,9 @@ const (
 
 // Tenant resource limits (for Phase 2+)
 const (
-	FreeTierMaxAgents      = 3
-	FreeTierMaxMessages    = 10000
-	FreeTierMaxStorage     = 1 * 1024 * 1024 * 1024 // 1GB
+	FreeTierMaxAgents   = 3
+	FreeTierMaxMessages = 10000
+	FreeTierMaxStorage  = 1 * 1024 * 1024 * 1024 // 1GB
 
 	StarterTierMaxAgents   = 10
 	StarterTierMaxMessages = 500000
@@ -61,4 +61,3 @@ const (
 	ProfessionalTierMaxMessages = 5000000
 	ProfessionalTierMaxStorage  = 100 * 1024 * 1024 * 1024 // 100GB
 )
-

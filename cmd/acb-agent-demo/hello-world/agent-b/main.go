@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/acb/pkg/acb"
+	"github.com/acb/pkg/acb-sdk"
 )
 
 func main() {
@@ -21,9 +21,9 @@ func main() {
 
 	// Register agent
 	req := &acb.RegisterAgentRequest{
-		ID:       "agent-b",
-		Type:     "hello-world",
-		Location: "local",
+		ID:           "agent-b",
+		Type:         "hello-world",
+		Location:     "local",
 		Capabilities: []string{"greeting"},
 		Metadata: map[string]string{
 			"version": "1.0",
@@ -43,7 +43,9 @@ func main() {
 		log.Printf("Agent B: Message: %s", string(c.Payload))
 		return nil
 	})
-	defer subscription.Unsubscribe()
+	defer func() {
+		_ = subscription.Unsubscribe()
+	}()
 
 	log.Println("Agent B: Subscribed to greetings")
 
@@ -62,4 +64,3 @@ func main() {
 	fmt.Println("Agent B running... Press Ctrl+C to stop")
 	select {}
 }
-

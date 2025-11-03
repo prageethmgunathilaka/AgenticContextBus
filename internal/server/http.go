@@ -7,26 +7,26 @@ import (
 	"time"
 
 	"github.com/acb/internal/auth"
-	"github.com/acb/internal/context"
+	contextmgr "github.com/acb/internal/context"
 	"github.com/acb/internal/registry"
 	"github.com/gin-gonic/gin"
 )
 
 // HTTPServer wraps HTTP server
 type HTTPServer struct {
-	router         *gin.Engine
-	registrySvc    *registry.Service
-	contextMgr     *context.Manager
-	jwtManager     *auth.JWTManager
-	rbac           *auth.RBAC
-	port           string
+	router      *gin.Engine
+	registrySvc *registry.Service
+	contextMgr  *contextmgr.Manager
+	jwtManager  *auth.JWTManager
+	rbac        *auth.RBAC
+	port        string
 }
 
 // NewHTTPServer creates a new HTTP server
 func NewHTTPServer(
 	port string,
 	registrySvc *registry.Service,
-	contextMgr *context.Manager,
+	contextMgr *contextmgr.Manager,
 	jwtManager *auth.JWTManager,
 	rbac *auth.RBAC,
 ) *HTTPServer {
@@ -40,11 +40,11 @@ func NewHTTPServer(
 
 	srv := &HTTPServer{
 		router:      router,
-		registrySvc:  registrySvc,
-		contextMgr:   contextMgr,
-		jwtManager:   jwtManager,
-		rbac:         rbac,
-		port:         port,
+		registrySvc: registrySvc,
+		contextMgr:  contextMgr,
+		jwtManager:  jwtManager,
+		rbac:        rbac,
+		port:        port,
 	}
 
 	srv.setupRoutes()
@@ -102,7 +102,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		srv.Shutdown(shutdownCtx)
+		_ = srv.Shutdown(shutdownCtx)
 	}()
 
 	fmt.Printf("HTTP server starting on port %s\n", s.port)
@@ -210,4 +210,3 @@ func (s *HTTPServer) refreshToken(c *gin.Context) {
 		"expires_in":   3600,
 	})
 }
-

@@ -16,7 +16,7 @@ import (
 // Manager provides context management operations
 type Manager struct {
 	store storage.ContextStore
-	cache storage.ContextCache // Will be implemented
+	// cache storage.ContextCache // Will be implemented later
 }
 
 // NewManager creates a new context manager
@@ -154,4 +154,3 @@ type UpdateRequest struct {
 	AccessControl models.AccessControl
 	TTL           time.Duration
 }
-

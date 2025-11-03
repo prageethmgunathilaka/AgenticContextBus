@@ -12,18 +12,18 @@ import (
 type Role string
 
 const (
-	RoleAdmin          Role = "admin"
-	RoleAgentProducer  Role = "agent-producer"
-	RoleAgentConsumer  Role = "agent-consumer"
-	RoleAgentFull      Role = "agent-full"
-	RoleObserver       Role = "observer"
+	RoleAdmin         Role = "admin"
+	RoleAgentProducer Role = "agent-producer"
+	RoleAgentConsumer Role = "agent-consumer"
+	RoleAgentFull     Role = "agent-full"
+	RoleObserver      Role = "observer"
 )
 
 // Permission represents a permission
 type Permission string
 
 const (
-	PermissionAgentRegister Permission = "agent:register"
+	PermissionAgentRegister  Permission = "agent:register"
 	PermissionAgentRead      Permission = "agent:read"
 	PermissionAgentWrite     Permission = "agent:write"
 	PermissionContextCreate  Permission = "context:create"
@@ -135,4 +135,3 @@ func ParseRoles(roleStrs []string) []Role {
 	}
 	return roles
 }
-
