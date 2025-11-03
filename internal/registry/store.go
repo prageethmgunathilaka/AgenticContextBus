@@ -2,7 +2,7 @@ package registry
 
 import (
 	"context"
-	"encoding/json"
+    "encoding/json"
 	"fmt"
 	"time"
 
@@ -28,7 +28,11 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+    // For TEXT[] column, pass nil for NULL or []string for values
+    var capabilities interface{}
+    if agent.Capabilities != nil && len(agent.Capabilities) > 0 {
+        capabilities = agent.Capabilities
+    }
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 
 	query := `
@@ -40,7 +44,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-		capabilitiesJSON,
+        capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.TenantID,
@@ -63,7 +67,7 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 	`
 
 	var agent models.Agent
-	var capabilitiesJSON []byte
+    var capabilities []string
 	var metadataJSON []byte
 	var statusStr string
 
@@ -71,7 +75,7 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 		&agent.ID,
 		&agent.Type,
 		&agent.Location,
-		&capabilitiesJSON,
+        &capabilities,
 		&metadataJSON,
 		&statusStr,
 		&agent.TenantID,
@@ -86,9 +90,9 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 		return nil, err
 	}
 
-	agent.Status = models.AgentStatus(statusStr)
-	json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
-	json.Unmarshal(metadataJSON, &agent.Metadata)
+    agent.Status = models.AgentStatus(statusStr)
+    agent.Capabilities = capabilities
+    json.Unmarshal(metadataJSON, &agent.Metadata)
 
 	return &agent, nil
 }
@@ -99,7 +103,11 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		return err
 	}
 
-	capabilitiesJSON, _ := json.Marshal(agent.Capabilities)
+    // For TEXT[] column, pass nil for NULL or []string for values
+    var capabilities interface{}
+    if agent.Capabilities != nil && len(agent.Capabilities) > 0 {
+        capabilities = agent.Capabilities
+    }
 	metadataJSON, _ := json.Marshal(agent.Metadata)
 
 	query := `
@@ -112,7 +120,7 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 		agent.ID,
 		agent.Type,
 		agent.Location,
-		capabilitiesJSON,
+        capabilities,
 		metadataJSON,
 		string(agent.Status),
 		agent.LastSeen,
@@ -193,7 +201,7 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 	var agents []*models.Agent
 	for rows.Next() {
 		var agent models.Agent
-		var capabilitiesJSON []byte
+        var capabilities []string
 		var metadataJSON []byte
 		var statusStr string
 
@@ -201,7 +209,7 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 			&agent.ID,
 			&agent.Type,
 			&agent.Location,
-			&capabilitiesJSON,
+            &capabilities,
 			&metadataJSON,
 			&statusStr,
 			&agent.TenantID,
@@ -212,9 +220,9 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 			return nil, err
 		}
 
-		agent.Status = models.AgentStatus(statusStr)
-		json.Unmarshal(capabilitiesJSON, &agent.Capabilities)
-		json.Unmarshal(metadataJSON, &agent.Metadata)
+        agent.Status = models.AgentStatus(statusStr)
+        agent.Capabilities = capabilities
+        json.Unmarshal(metadataJSON, &agent.Metadata)
 		agents = append(agents, &agent)
 	}
 
