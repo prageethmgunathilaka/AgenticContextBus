@@ -95,6 +95,80 @@ func TestRefreshTokenEndpoint(t *testing.T) {
     if w.Code != http.StatusOK { t.Fatalf("expected 200, got %d", w.Code) }
 }
 
+func TestLoginEndpoint(t *testing.T) {
+    httpSrv := makeServerForHandlersTest(t)
+
+    body, _ := json.Marshal(map[string]string{"username":"u","password":"p"})
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusOK { t.Fatalf("expected 200, got %d", w.Code) }
+}
+
+func TestContextHandlers_CRUD(t *testing.T) {
+    httpSrv := makeServerForHandlersTest(t)
+    jwt := httpSrv.jwtManager
+    hdr := authHeader(t, jwt)
+
+    // create context
+    create := map[string]any{
+        "type": "greeting",
+        "payload": []byte("hello"),
+        "metadata": map[string]string{"k":"v"},
+        "version": "1",
+        "access_control": map[string]any{"scope":"public"},
+        "ttl": 60,
+    }
+    body, _ := json.Marshal(create)
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("POST", "/api/v1/contexts", bytes.NewBuffer(body))
+    req.Header.Set("Authorization", hdr)
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusCreated { t.Fatalf("create expected 201, got %d", w.Code) }
+
+    var resp map[string]any
+    _ = json.Unmarshal(w.Body.Bytes(), &resp)
+    ctxObj := resp["context"].(map[string]any)
+    ctxID := ctxObj["id"].(string)
+
+    // list contexts
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("GET", "/api/v1/contexts", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusOK { t.Fatalf("list expected 200, got %d", w.Code) }
+
+    // get context
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("GET", "/api/v1/contexts/"+ctxID, nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusOK { t.Fatalf("get expected 200, got %d", w.Code) }
+
+    // update context
+    update := map[string]any{
+        "metadata": map[string]string{"k":"v2"},
+        "version": "2",
+        "ttl": 120,
+    }
+    body, _ = json.Marshal(update)
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("PUT", "/api/v1/contexts/"+ctxID, bytes.NewBuffer(body))
+    req.Header.Set("Authorization", hdr)
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusOK { t.Fatalf("update expected 200, got %d", w.Code) }
+
+    // delete context
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("DELETE", "/api/v1/contexts/"+ctxID, nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusNoContent { t.Fatalf("delete expected 204, got %d", w.Code) }
+}
+
 func TestAgentHandlers_CRUD(t *testing.T) {
     httpSrv := makeServerForHandlersTest(t)
     jwt := httpSrv.jwtManager

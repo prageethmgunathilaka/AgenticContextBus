@@ -34,10 +34,8 @@ func TestPostgresContextStore_CRUD(t *testing.T) {
         TTL:      time.Hour,
         AccessControl: models.AccessControl{Scope: models.ScopePublic},
         CreatedAt: time.Now(),
-        Checksum:  models.CalculateChecksum([]byte("hello")),
+        Checksum:  "",
     }
-    // CalculateChecksum is in stream package; fallback simple value if not available
-    if c.Checksum == "" { c.Checksum = "" }
 
     err = ctxStore.Create(ctx, c)
     require.NoError(t, err)
