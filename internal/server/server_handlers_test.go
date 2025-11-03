@@ -296,6 +296,33 @@ func TestHandlers_NilContextManager(t *testing.T) {
 	}
 }
 
+func TestHandlers_NilRegistryService(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+    jwtManager := auth.NewJWTManager("s")
+    httpSrv := NewHTTPServer("8080", nil, nil, jwtManager, auth.NewRBAC())
+    hdr := authHeader(t, jwtManager)
+
+    // list agents should 500
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("GET", "/api/v1/agents", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusInternalServerError {
+        t.Fatalf("expected 500, got %d", w.Code)
+    }
+
+    // register agent should 500
+    body, _ := json.Marshal(map[string]any{"id":"a","type":"t"})
+    w = httptest.NewRecorder()
+    req, _ = http.NewRequest("POST", "/api/v1/agents", bytes.NewBuffer(body))
+    req.Header.Set("Authorization", hdr)
+    req.Header.Set("Content-Type", "application/json")
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusInternalServerError {
+        t.Fatalf("expected 500, got %d", w.Code)
+    }
+}
+
 func TestAgentHandlers_CRUD(t *testing.T) {
 	httpSrv := makeServerForHandlersTest(t)
 	jwt := httpSrv.jwtManager

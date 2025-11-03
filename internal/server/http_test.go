@@ -129,6 +129,20 @@ func TestCorsMiddleware(t *testing.T) {
 	assert.Contains(t, w.Header().Get("Access-Control-Allow-Origin"), "*")
 }
 
+func TestCorsPreflight(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+
+    router := gin.New()
+    router.Use(corsMiddleware())
+    router.OPTIONS("/test", func(c *gin.Context) { c.String(200, "ok") })
+
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("OPTIONS", "/test", nil)
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
 func TestRequestIDMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -143,4 +157,21 @@ func TestRequestIDMiddleware(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.NotEmpty(t, w.Header().Get("X-Request-ID"))
+}
+
+func TestRequestIDMiddleware_Passthrough(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+
+    router := gin.New()
+    router.Use(requestIDMiddleware())
+    router.GET("/test", func(c *gin.Context) {
+        c.String(200, "ok")
+    })
+
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("GET", "/test", nil)
+    req.Header.Set("X-Request-ID", "abc123")
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, "abc123", w.Header().Get("X-Request-ID"))
 }
