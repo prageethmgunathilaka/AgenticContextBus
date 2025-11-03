@@ -2,9 +2,9 @@ package registry
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
-    "strconv"
 
 	"github.com/acb/internal/models"
 	"github.com/acb/internal/storage"
@@ -160,21 +160,21 @@ func TestPostgresAgentStore_List(t *testing.T) {
 	agentStore := NewPostgresAgentStore(store.Pool())
 	ctx := context.Background()
 
-    // Create test agents
-    for i := 0; i < 3; i++ {
-        agent := &models.Agent{
-            ID:        "test-agent-list-" + strconv.Itoa(i),
-            Type:      "ml",
-            Status:    models.AgentStatusOnline,
-            TenantID:  "default",
-            CreatedAt: time.Now(),
-            LastSeen:  time.Now(),
-        }
-        _ = agentStore.Create(ctx, agent)
-        defer func(id string) {
-            _ = agentStore.Delete(ctx, id)
-        }(agent.ID)
-    }
+	// Create test agents
+	for i := 0; i < 3; i++ {
+		agent := &models.Agent{
+			ID:        "test-agent-list-" + strconv.Itoa(i),
+			Type:      "ml",
+			Status:    models.AgentStatusOnline,
+			TenantID:  "default",
+			CreatedAt: time.Now(),
+			LastSeen:  time.Now(),
+		}
+		_ = agentStore.Create(ctx, agent)
+		defer func(id string) {
+			_ = agentStore.Delete(ctx, id)
+		}(agent.ID)
+	}
 
 	// Test List
 	filters := &storage.AgentFilters{
@@ -215,7 +215,7 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-    defer func(){ _ = agentStore.Delete(ctx, "test-agent-heartbeat") }()
+	defer func() { _ = agentStore.Delete(ctx, "test-agent-heartbeat") }()
 
 	// Update last seen
 	err = agentStore.UpdateLastSeen(ctx, "test-agent-heartbeat")
