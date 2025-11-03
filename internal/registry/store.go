@@ -92,7 +92,9 @@ func (s *PostgresAgentStore) Get(ctx context.Context, agentID string) (*models.A
 
     agent.Status = models.AgentStatus(statusStr)
     agent.Capabilities = capabilities
-    json.Unmarshal(metadataJSON, &agent.Metadata)
+    if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
+        return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+    }
 
 	return &agent, nil
 }
@@ -222,7 +224,9 @@ func (s *PostgresAgentStore) List(ctx context.Context, filters *storage.AgentFil
 
         agent.Status = models.AgentStatus(statusStr)
         agent.Capabilities = capabilities
-        json.Unmarshal(metadataJSON, &agent.Metadata)
+        if err := json.Unmarshal(metadataJSON, &agent.Metadata); err != nil {
+            return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+        }
 		agents = append(agents, &agent)
 	}
 
