@@ -39,7 +39,7 @@ func TestPostgresContextStore_CRUD(t *testing.T) {
 
     err = ctxStore.Create(ctx, c)
     require.NoError(t, err)
-    defer ctxStore.Delete(ctx, c.ID)
+    defer func(){ _ = ctxStore.Delete(ctx, c.ID) }()
 
     // Get
     got, err := ctxStore.Get(ctx, c.ID)

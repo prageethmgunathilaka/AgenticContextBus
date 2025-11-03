@@ -30,7 +30,7 @@ func (s *PostgresAgentStore) Create(ctx context.Context, agent *models.Agent) er
 
     // For TEXT[] column, pass nil for NULL or []string for values
     var capabilities interface{}
-    if agent.Capabilities != nil && len(agent.Capabilities) > 0 {
+    if len(agent.Capabilities) > 0 {
         capabilities = agent.Capabilities
     }
 	metadataJSON, _ := json.Marshal(agent.Metadata)
@@ -105,7 +105,7 @@ func (s *PostgresAgentStore) Update(ctx context.Context, agent *models.Agent) er
 
     // For TEXT[] column, pass nil for NULL or []string for values
     var capabilities interface{}
-    if agent.Capabilities != nil && len(agent.Capabilities) > 0 {
+    if len(agent.Capabilities) > 0 {
         capabilities = agent.Capabilities
     }
 	metadataJSON, _ := json.Marshal(agent.Metadata)

@@ -215,7 +215,7 @@ func TestPostgresAgentStore_UpdateLastSeen(t *testing.T) {
 	}
 	err = agentStore.Create(ctx, agent)
 	require.NoError(t, err)
-	defer agentStore.Delete(ctx, "test-agent-heartbeat")
+    defer func(){ _ = agentStore.Delete(ctx, "test-agent-heartbeat") }()
 
 	// Update last seen
 	err = agentStore.UpdateLastSeen(ctx, "test-agent-heartbeat")

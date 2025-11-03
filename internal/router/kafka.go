@@ -143,8 +143,10 @@ func (c *KafkaConsumer) Consume(ctx context.Context, handler func(*models.Messag
 				continue
 			}
 
-			// Commit offset
-			c.consumer.CommitMessage(msg)
+            // Commit offset
+            if _, err := c.consumer.CommitMessage(msg); err != nil {
+                return fmt.Errorf("failed to commit message: %w", err)
+            }
 		}
 	}
 }
@@ -157,7 +159,6 @@ func (c *KafkaConsumer) Close() error {
 // Router handles message routing
 type Router struct {
 	producer *KafkaProducer
-	idStore  IdempotencyStore // Will be implemented
 }
 
 // NewRouter creates a new message router
