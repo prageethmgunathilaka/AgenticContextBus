@@ -54,7 +54,7 @@ type inMemoryContextStore struct{ m map[string]*models.Context }
 func (s *inMemoryContextStore) Create(ctx context.Context, c *models.Context) error { if s.m==nil{s.m=map[string]*models.Context{}}; cp:=*c; s.m[c.ID]=&cp; return nil }
 func (s *inMemoryContextStore) Get(ctx context.Context, id string) (*models.Context, error) { if c,ok:=s.m[id]; ok{cp:=*c; return &cp,nil}; return nil, fmt.Errorf("context not found") }
 func (s *inMemoryContextStore) Update(ctx context.Context, c *models.Context) error { if _,ok:=s.m[c.ID];!ok{return fmt.Errorf("context not found")}; cp:=*c; s.m[c.ID]=&cp; return nil }
-func (s *inMemoryContextStore) Delete(ctx context.Context, id string) error { delete(s.m,id); return nil }
+func (s *inMemoryContextStore) Delete(ctx context.Context, id string) error { if _, ok := s.m[id]; !ok { return fmt.Errorf("context not found") }; delete(s.m,id); return nil }
 func (s *inMemoryContextStore) List(ctx context.Context, f *storage.ContextFilters) ([]*models.Context, error) { res:=[]*models.Context{}; for _,c:= range s.m{cp:=*c; res=append(res,&cp)}; return res,nil }
 func (s *inMemoryContextStore) DeleteExpired(ctx context.Context) (int, error) { return 0, nil }
 
@@ -203,6 +203,19 @@ func TestHandlers_BadBodiesAndNotFound(t *testing.T) {
     req.Header.Set("Authorization", hdr)
     httpSrv.router.ServeHTTP(w, req)
     if w.Code != http.StatusNotFound { t.Fatalf("delete missing expected 404, got %d", w.Code) }
+}
+
+func TestHandlers_NilContextManager(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+    jwtManager := auth.NewJWTManager("s")
+    httpSrv := NewHTTPServer("8080", nil, nil, jwtManager, auth.NewRBAC())
+    hdr := authHeader(t, jwtManager)
+
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("GET", "/api/v1/contexts", nil)
+    req.Header.Set("Authorization", hdr)
+    httpSrv.router.ServeHTTP(w, req)
+    if w.Code != http.StatusInternalServerError { t.Fatalf("expected 500, got %d", w.Code) }
 }
 
 func TestAgentHandlers_CRUD(t *testing.T) {
