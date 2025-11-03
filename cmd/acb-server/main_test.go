@@ -17,5 +17,3 @@ func TestGetEnv(t *testing.T) {
 		t.Fatalf("expected value, got %s", v)
 	}
 }
-
-
